@@ -157,8 +157,20 @@ enabled = true
 policy = "oneshot"
 inspector_port = 8083
 
+[functions.spotify-login]
+verify_jwt = true
+import_map = './functions/import_map.json'
+
+[functions.spotify-callback]
+verify_jwt = false
+import_map = './functions/import_map.json'
+
+[functions.check-spotify]
+verify_jwt = true
+import_map = './functions/import_map.json'
+
 [analytics]
-enabled = false
+enabled = true
 port = 54327
 vector_port = 54328
 # Configure one of the supported backends: `postgres`, `bigquery`.
