@@ -8,13 +8,9 @@
 import { decode as base64Decode, encode as base64Encode } from 'decoding'
 import * as queryString from "querystring";
 import { createClient } from "supabase"
-
+import { corsHeaders } from "../_shared/cors.ts";
 console.log("Hello from Functions!");
-const corsHeaders = new Headers({
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-});
+
 /**
  * 
  * @param _req request from spotify that contains the code needed to request...
@@ -26,7 +22,6 @@ const corsHeaders = new Headers({
 async function handleSpotifyCallbackRequest(_req: Request) {
   const params = queryString.parse(new URL(_req.url).search)
   
-  const redirectUrl = Deno.env.get("SP_REDIRECT")
   const token = params.state
   console.log("token", token)
   /* this needs to get shared amongst the various edge functions some how but i have no idea how to make it work */
@@ -105,11 +100,17 @@ async function storeSpotifyCredentials(creds: JSON, token){
   const { data: { user } } = await supabase.auth.getUser()
   console.log('user', user);
   const { data: credsData, error: grabError } = await supabase.from('spotify_credentials').select('*')
+  
   if (grabError) {
     console.log('grab error', grabError)
     return false;
   }else{
-    console.log('data', credsData)
+    console.log('data', await credsData)
+  }
+
+  const deleteResponse = await supabase.from('spotify_credentials').delete().eq('id', await user.id)  
+  if(deleteResponse){
+    console.log('delete error', deleteResponse)
   }
   const { error : insertError } = await supabase.from('spotify_credentials').insert({
     id: await user.id,
@@ -121,10 +122,6 @@ async function storeSpotifyCredentials(creds: JSON, token){
     return false;
   }
   return true;
-  
-  
-
-
 }
 /**
  * 

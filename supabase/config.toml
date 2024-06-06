@@ -166,7 +166,7 @@ verify_jwt = false
 import_map = './functions/import_map.json'
 
 [functions.check-spotify]
-verify_jwt = true
+verify_jwt = false 
 import_map = './functions/import_map.json'
 
 [analytics]

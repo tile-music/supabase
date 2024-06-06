@@ -1,32 +1,34 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "supabase";
+import * as queryString from "querystring";
+import { serve } from "serve";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
-
-console.log("check spotify!")
-
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+/**
+ * 
+ * @param _req request from client which must contain the token representing the user's session
+ * @returns response that has a value of either 1 or 0, 1 means the user has spotify credentials...
+ * stored and 0 means the user does not have spotify credentials stored
+ */
+async function handleCheckSpotify(_req: Request) {
+  console.log(_req);
+  let authHeader = _req.headers.get("Authorization")!;
+  console.log(authHeader);
+  const supabase = await createClient(
+    Deno.env.get("SB_URL") ?? "",
+    Deno.env.get("SB_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+  const { data: dbData, error } = await supabase
+    .from("spotify_credentials")
+    .select("*");
+  console.log(user);
+  console.log(dbData, error);
+  if (dbData.length === 0) {
+    return new Response("0", { headers: corsHeaders });
+  }else{
+    return new Response("1", { headers: corsHeaders });
   }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/check-spotify' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+}
+serve(handleCheckSpotify);

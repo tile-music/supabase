@@ -8,11 +8,7 @@ import { cryptoRandomString } from "crypto"
 import * as queryString from "querystring"
 import { serve } from "serve"
 
-const corsHeaders = new Headers ({
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-});
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
  * 
@@ -21,8 +17,8 @@ const corsHeaders = new Headers ({
  * @todo update the scope to be more specific to the user's needs something like, user currently playing
  */
 function handleSpotifyLogin(_req: Request) {
-  
-  const scope = "user-read-private";
+
+  const scope = "user-read-currently-playing";
   const clientId = Deno.env.get("SP_CID");
   const redirectUrl = Deno.env.get("SP_REDIRECT");
   let authHeader = _req.headers.get("Authorization") 
