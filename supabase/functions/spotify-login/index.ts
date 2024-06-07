@@ -30,7 +30,7 @@ function handleSpotifyLogin(_req: Request) {
                 scope: scope,
                 redirect_uri: redirectUrl,
                 state: authHeader,
-              })
+              });
   return new Response( spotifyString, {headers: corsHeaders})
 }
 serve(handleSpotifyLogin);
