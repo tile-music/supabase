@@ -22,7 +22,7 @@ console.log("Hello from Functions!");
 async function handleSpotifyCallbackRequest(_req: Request) {
   const params = queryString.parse(new URL(_req.url).search)
   
-  const token = params.state
+  const token = params.state.toString().replace("+", " ")
   console.log("token", token)
   /* this needs to get shared amongst the various edge functions some how but i have no idea how to make it work */
   if (params.state === null) {
@@ -98,6 +98,8 @@ async function storeSpotifyCredentials(creds: JSON, token){
   )
   
   const { data: { user } } = await supabase.auth.getUser()
+
+  
   console.log('user', user);
   const { data: credsData, error: grabError } = await supabase.from('spotify_credentials').select('*')
   
