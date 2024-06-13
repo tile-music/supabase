@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "supabase";
+import { createSbClient } from "../_shared/client.ts";
 import * as queryString from "querystring";
 import { serve } from "serve";
 
@@ -14,11 +14,7 @@ async function handleUserDataRequest(_req: Request) {
   console.log(_req);
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
-  const supabase = await createClient(
-    Deno.env.get("SB_URL") ?? "",
-    Deno.env.get("SB_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
+  const supabase = await createSbClient(authHeader);
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   const { data: dbData, error } = await supabase
