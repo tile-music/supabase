@@ -1,6 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { serve } from "serve";
-import { handleIsrcRequest, MusicRequest, handleEanRequest,handleUpcRequest } from "../_shared/musicbrainz.ts"
+import { handleIsrcRequest, MusicRequest, handleEanRequest,handleUpcRequest,translateDBEntryToMusicRequest } from "../_shared/musicbrainz.ts"
 
 /**
  * This function handles a request containing an isrc, ean, or upc and returns the corresponding musicbrainz data...
@@ -14,7 +14,7 @@ async function handleMusicbrainzRequest(_req: Request) {
   console.log(_req);
   const reqResolved = await _req.json();
   console.log(reqResolved);
-  const body : MusicRequest = reqResolved ;
+  const body : MusicRequest = translateDBEntryToMusicRequest(reqResolved);
   let ret;
   if (body.isrcReq) {
     ret = await handleIsrcRequest(body.isrcReq);

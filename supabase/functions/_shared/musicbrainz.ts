@@ -16,11 +16,20 @@ export type MusicRequest = {
   };
 };
 
+export function translateDBEntryToMusicRequest(req) {
+  return {
+    isrcReq: {
+      isrc: req.record.isrc,
+      albumName: req.record.track_album.album_name,
+    },
+  };
+}
+
 /**
- * 
+ *
  * @param musicBrainzId the id of the album in the musicbrainz database
  * @returns the album art for the album if it exists
- * 
+ *
  * TODO: move this function somewhere else, im not gonna use it here
  */
 
@@ -36,21 +45,30 @@ async function fetchAlbumArt(musicBrainzId: string) {
   };
 }
 async function responseHelper(response: any, albumName: string) {
-  let ret = {error: "No corresponding release found"}
+  let ret = { error: "No corresponding release found" };
   console.log(response);
   let filtered;
   if (response) {
-    filtered = response.recordings[0]?.releases.reduce(
-      (filtered: any, recording: any) => {
-        if (recording.title === albumName) {
+    filtered = response.recordings.map((element) => {
+      filtered = element.releases.reduce((filtered: any, recording: any) => {
+        if (
+          recording.title.toString().toLowerCase() ===
+          albumName.toString().toLowerCase()
+        ) {
+          console.log("matches!!!", recording);
           filtered.push(recording);
-        }
+        } else console.log("NO MATCH!!!");
+        console.log("filtered inside func", filtered);
         return filtered;
-      },
-      []
-    );
+      }, []);
+      console.log("filtered after func", filtered);
+      return filtered;
+    });
     console.log("FILTERED!!!!!", filtered);
-    if (filtered && filtered.length > 0) ret = filtered[0]
+    if (filtered && filtered.length > 0) {
+      if (filtered[0].length === 0) ret = filtered[1][0]
+      else ret = filtered[0][0];
+    };
     console.log(ret);
     return ret;
   }
@@ -68,7 +86,6 @@ export async function handleIsrcRequest(isrcReq: {
 
   const ret = await responseHelper(data, isrcReq.albumName);
   console.log(ret);
-
   return ret;
 }
 

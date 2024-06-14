@@ -18,7 +18,7 @@ async function handleUserDataRequest(_req: Request) {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   const { data: dbData, error } = await supabase
-    .from("played_tracks")
+    .from("track_play_details")
     .select("*");
   console.log(user);
   console.log(dbData, error);

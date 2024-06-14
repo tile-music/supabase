@@ -1,13 +1,13 @@
 import { createSbClient } from "../_shared/client.ts";
 import { assert, assertEquals } from 'https://deno.land/std@0.192.0/testing/asserts.ts'
 
-const testCheckSpotifyTrue = async () => {
-  var client = await createSbClient();
+const client = await createSbClient();
+
+export const testCheckSpotifyTrue = async () => {
   await client.auth.signInWithPassword({
     email: Deno.env.get("SB_TEST_EMAIL")!,
     password: Deno.env.get("SB_TEST_PASSWORD")!,
   });
-
   const {data:{session} }  = await client.auth.getSession()
 
   console.log(session)
@@ -33,5 +33,9 @@ const testCheckSpotifyTrue = async () => {
 
   // Assert that the function returned the expected result
   assertEquals(funcData, 1);
+  client.auth.signOut()
+  console.log(await client.auth.getSession())
 };
 Deno.test('Client Creation Test',  testCheckSpotifyTrue)  
+
+
