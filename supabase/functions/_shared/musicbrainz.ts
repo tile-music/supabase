@@ -6,7 +6,7 @@ import { corsHeaders } from "./cors.ts";
 export type MusicRequest = {
   isrcReq?: {
     isrc: string;
-    albumName: string;
+    match: MatchMetrics;
   };
   upcReq?: {
     upc: string;
@@ -16,11 +16,25 @@ export type MusicRequest = {
   };
 };
 
-export function translateDBEntryToMusicRequest(req) {
+export type MatchMetrics = {
+  albumName: string;
+  artistName: string[];
+  numTracks: number;
+  date: string;
+};
+
+export function translateDBEntryToMusicRequest(req: any) {
+  console.log(req);
+  const match: MatchMetrics = {
+    albumName: req.record.track_album.album_name,
+    artistName: req.record.track_album.artists,
+    numTracks: req.record.track_album.num_tracks,
+    date: req.record.track_album.release_date,
+  };
   return {
     isrcReq: {
       isrc: req.record.isrc,
-      albumName: req.record.track_album.album_name,
+      match: match,
     },
   };
 }
@@ -33,60 +47,125 @@ export function translateDBEntryToMusicRequest(req) {
  * TODO: move this function somewhere else, im not gonna use it here
  */
 
-async function fetchAlbumArt(musicBrainzId: string) {
+export async function fetchAlbumArt(musicBrainzId: string) {
   const response = await fetch(
     `http://coverartarchive.org/release/${musicBrainzId}`
   );
   console.log(response);
-  const data = await response.json();
+  return response;
+  /* const data =  response ? response.json() : null;
   console.log(data);
   return {
     body: data ? data : "Album may not exist in the Musicbrainz database",
-  };
+  }; */
 }
-async function responseHelper(response: any, albumName: string) {
-  let ret = { error: "No corresponding release found" };
-  console.log(response);
-  let filtered;
+
+export async function findAlbumArt(data: any, map: Map<string, JSON>) {
+  console.log("data", data);
+  if(data.images instanceof Array) {
+    console.log("data is array");
+  }
+  for (const id of data.images) {
+    console.log("ids", id);
+    const art = await fetchAlbumArt(id);
+    console.log(art);
+    if (art.status === 200) {
+      await art.json().then((data) => map.set(id, data));
+    }
+  }
+  return map;
+}
+
+async function handleAlbumArt(data : any[]){
+  let artMap = new Map<string, JSON>();
+  if(data){
+    for(const mbid of data){
+      const art = await fetchAlbumArt(mbid);
+      if(art.status === 200){
+        artMap = await art.json().then(async(data) => await findAlbumArt(data, artMap));
+      }
+    }
+ 
+  }
+
+}
+
+
+async function sortMbResponse(response: any) {
+  console.log("called sort mbresponse");
+  let ret  = [];
+
   if (response) {
-    filtered = response.recordings.map((element) => {
-      filtered = element.releases.reduce((filtered: any, recording: any) => {
-        if (
-          recording.title.toString().toLowerCase() ===
-          albumName.toString().toLowerCase()
-        ) {
-          console.log("matches!!!", recording);
-          filtered.push(recording);
-        } else console.log("NO MATCH!!!");
-        console.log("filtered inside func", filtered);
-        return filtered;
-      }, []);
-      console.log("filtered after func", filtered);
-      return filtered;
+    console.log("count", response.count);
+    for (let i = 0; i < response.count; i++) {
+      console.log("loopin");
+      //console.log("response", response.recordings[i].releases);
+      //console.log("response", response.recordings[i])
+      for (let j = 0; j < response.recordings[i].releases.length; j++) {
+        const release = response.recordings[i].releases[j];
+        if (release) ret.push(release);
+      }
+    }
+  }
+  //console.log("ret", ret)
+  return ret;
+}
+
+/**
+ *
+ * @todo implement another helper to streamline all the releases to be matched
+ *
+ * @param response the response from the musicbrainz API
+ * @param albumName the name of the album to be matched
+ * @returns the matched albums
+ */
+async function responseHelper(response: any, match: MusicRequest) {
+  let sorted = await sortMbResponse(response);
+  //console.log("SORTED" , sorted)
+
+  let filtered: any[] = [];
+  if (response) {
+    sorted.map((element: any) => {
+      if (
+        element.title.toString().toLowerCase() ===
+          match.isrcReq?.match.albumName.toString().toLowerCase() &&
+        element["track-count"] === match.isrcReq?.match.numTracks
+      ) {
+        console.log("match", element);
+        filtered.push(element.id);
+      }
     });
-    console.log("FILTERED!!!!!", filtered);
-    if (filtered && filtered.length > 0) {
-      if (filtered[0].length === 0) ret = filtered[1][0]
-      else ret = filtered[0][0];
-    };
-    console.log(ret);
-    return ret;
+    console.log("filtered", filtered);
+    return filtered;
   }
 }
 
+
+/**
+ *
+ * @param isrcReq
+ * @todo add a regex to prevent garbage from mb
+ */
+
 export async function handleIsrcRequest(isrcReq: {
   isrc: string;
-  albumName: string;
+  match: MatchMetrics;
 }) {
+  console.log(isrcReq);
   const isrc = isrcReq.isrc;
   const response = await fetch(
     `https://musicbrainz.org/ws/2/recording?query=isrc:${isrc}&fmt=json`
   );
+  console.log(response);
   const data = await response.json();
-
-  const ret = await responseHelper(data, isrcReq.albumName);
-  console.log(ret);
-  return ret;
+  console.log;
+  if (data.count === 0) return { error: "No corresponding release found" };
+  else {
+    const mbids = await responseHelper(data, { isrcReq: isrcReq });
+    console.log(mbids);
+    if(mbids) console.log(await handleAlbumArt(mbids));
+    return mbids;
+  }
 }
 
 export async function handleUpcRequest(upcReq: { upc: string }) {
