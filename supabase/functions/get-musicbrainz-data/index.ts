@@ -16,10 +16,12 @@ async function handleMusicbrainzRequest(_req: Request) {
   console.log(reqResolved);
   const body : MusicRequest = translateDBEntryToMusicRequest(reqResolved);
   let ret;
-  if (body.isrcReq) {
+  if (body.isrcReq?.isrc) {
     console.log("isrc");
     console.log(body)
     ret = await handleIsrcRequest(body.isrcReq)
+    
+
   } else if (body.upcReq) {
     console.log("upc");
     //ret = await handleUpcRequest(body.upcReq);
