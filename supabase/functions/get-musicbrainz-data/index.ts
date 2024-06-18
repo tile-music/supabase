@@ -5,7 +5,7 @@ import { handleIsrcRequest, MusicRequest, handleEanRequest,handleUpcRequest,tran
 /**
  * This function handles a request containing an isrc, ean, or upc and returns the corresponding musicbrainz data...
  * on isrc request, the album name may be passed as well, this is a crude effort to match the entry in musicbrainz...
- * to the album a user actually listened to
+ * to the album/release a user actually listened to
  * 
  * @param _req - The request object.
  * @returns A response object containing the musicbrainz data or an error message.  
@@ -20,8 +20,6 @@ async function handleMusicbrainzRequest(_req: Request) {
     console.log("isrc");
     console.log(body)
     ret = await handleIsrcRequest(body.isrcReq)
-    
-
   } else if (body.upcReq) {
     console.log("upc");
     //ret = await handleUpcRequest(body.upcReq);
