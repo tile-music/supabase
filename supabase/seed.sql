@@ -27,14 +27,15 @@ CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA "extensions";
 CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
-
 CREATE TYPE "public"."album" AS (
 	"album_name" "text",
 	"album_type" "text",
 	"num_tracks" smallint,
 	"release_date" "date",
 	"artists" "text"[],
-	"upc" "text"
+	"upc" "text",
+    "image" "text"
+
 );
 
 ALTER TYPE "public"."album" OWNER TO "postgres";
@@ -217,10 +218,10 @@ CREATE POLICY "users may update their own played tracks" ON "public"."played_tra
 
 CREATE POLICY "users may update their own spotify creds" ON "public"."spotify_credentials" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
-CREATE PUBLICATION "logflare_pub" WITH (publish = 'insert, update, delete, truncate');
+/*CREATE PUBLICATION "logflare_pub" WITH (publish = 'insert, update, delete, truncate');
 
 ALTER PUBLICATION "logflare_pub" OWNER TO "supabase_admin";
-
+*/
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
