@@ -14,12 +14,12 @@ async function handleCheckSpotify(_req: Request) {
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
   const supabase = await createSbClient(authHeader); 
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
+  /* const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user; */
   const { data: dbData, error } = await supabase
     .from("spotify_credentials")
     .select("*");
-  console.log(user);
+  /* console.log(user); */
   console.log(dbData, error);
   if (dbData.length === 0) {
     return new Response("0", { headers: corsHeaders });

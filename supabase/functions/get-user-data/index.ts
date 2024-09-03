@@ -20,7 +20,7 @@ async function handleUserDataRequest(_req: Request) {
   const { data: dbData, error } = await supabase
     .from("track_play_details")
     .select("*");
-  console.log(user);
+  
   console.log(dbData, error);
   if (dbData.length === 0) {
     return new Response("0", { headers: corsHeaders });
