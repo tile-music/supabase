@@ -6,11 +6,14 @@ import { createSbClient } from "../_shared/client.ts";
 /**
  * 
  * @param _req request from client which must contain the token representing the user's session
+ * 
+ *  the token for the users session is stored in the Authorization header
+ * 
  * @returns response that has a value of either 1 or 0, 1 means the user has spotify credentials...
  * stored and 0 means the user does not have spotify credentials stored
  */
 async function handleCheckSpotify(_req: Request) {
-  console.log(_req);
+  console.log(_req); // ripe for error handling
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
   const supabase = await createSbClient(authHeader); 
