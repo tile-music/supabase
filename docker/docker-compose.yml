@@ -79,7 +79,7 @@ services:
     container_name: supabase-auth
     image: supabase/gotrue:v2.158.1
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -152,7 +152,7 @@ services:
     container_name: supabase-rest
     image: postgrest/postgrest:v12.2.0
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -173,7 +173,7 @@ services:
     container_name: realtime-dev.supabase-realtime
     image: supabase/realtime:v2.30.34
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -217,7 +217,7 @@ services:
     container_name: supabase-storage
     image: supabase/storage-api:v1.10.1
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       rest:
@@ -276,7 +276,7 @@ services:
     container_name: supabase-meta
     image: supabase/postgres-meta:v0.83.2
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -322,7 +322,7 @@ services:
       retries: 10
     restart: unless-stopped
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
     # Uncomment to use Big Query backend for analytics
@@ -355,7 +355,7 @@ services:
       - 4000:4000
 
   # Comment out everything below this point if you are using an external Postgres database
-  db:
+  supabase-db:
     container_name: supabase-db
     image: supabase/postgres:15.1.1.78
     healthcheck:
