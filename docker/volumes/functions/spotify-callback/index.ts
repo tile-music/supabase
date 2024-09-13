@@ -5,10 +5,11 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
-import { decode as base64Decode, encode as base64Encode } from 'decoding'
-import * as queryString from "querystring";
-import { createClient } from "supabase"
+import { decode as base64Decode, encode as base64Encode } from "https://deno.land/std@0.166.0/encoding/base64.ts";
+import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js"
 import { corsHeaders } from "../_shared/cors.ts";
+import { environment } from "../_shared/environment.ts";
 console.log("Hello from Functions!");
 
 /**
@@ -36,7 +37,7 @@ async function handleSpotifyCallbackRequest(_req: Request) {
   } else {
     
     await handleSpotifyCredentials(token,params)
-    const headers = new Headers({location: "http://localhost:4200/account",
+    const headers = new Headers({location: "http://130.215.28.32:4200/account",
                                   ...corsHeaders
      })
     console.log(headers)
@@ -55,9 +56,9 @@ async function handleSpotifyCallbackRequest(_req: Request) {
  * @returns 
  */
 async function getSpotifyCredentials(params) : Promise<JSON>{
-  const clientSecret = Deno.env.get("SP_SECRET")
-  const clientId = Deno.env.get("SP_CID")
-  const redirectUrl = Deno.env.get("SP_REDIRECT")
+  const clientSecret = environment.SP_SECRET
+  const clientId = environment.SP_CID
+  const redirectUrl = environment.SP_REDIRECT
   const encodedCredentials = base64Encode(clientId + ":" + clientSecret)
   console.log(encodedCredentials)
   const response =  fetch("https://accounts.spotify.com/api/token",{
@@ -92,8 +93,8 @@ async function storeSpotifyCredentials(creds: JSON, token){
   } 
   console.log("token", token )
   const supabase = await createClient(
-    Deno.env.get('SB_URL') ?? '',
-    Deno.env.get('SB_ANON_KEY') ?? '',
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: token} } }
   )
   

@@ -133,3 +133,7 @@ gcloud.json
 # sitemaps
 # apps/www/public/*.xml
 # apps/docs/public/*.xml
+
+# added by ibixler
+# this is for the env hack because i dont want to do it the "right" way right now
+environment.ts

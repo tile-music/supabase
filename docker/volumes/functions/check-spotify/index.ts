@@ -1,6 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import * as queryString from "querystring";
-import { serve } from "serve";
+import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
+import { serve } from "https://deno.land/std/http/mod.ts";
 import { createSbClient } from "../_shared/client.ts";
 
 /**
@@ -16,6 +16,7 @@ async function handleCheckSpotify(_req: Request) {
   console.log(_req); // ripe for error handling
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
+  
   const supabase = await createSbClient(authHeader); 
   /* const { data: userData } = await supabase.auth.getUser();
   const user = userData.user; */
