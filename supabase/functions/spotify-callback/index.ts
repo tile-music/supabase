@@ -36,7 +36,7 @@ async function handleSpotifyCallbackRequest(_req: Request) {
   } else {
     
     await handleSpotifyCredentials(token,params)
-    const headers = new Headers({location: "http://localhost:4200/account",
+    const headers = new Headers({location: "http://localhost:5173/profile",
                                   ...corsHeaders
      })
     console.log(headers)
