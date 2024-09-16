@@ -1,7 +1,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
-import * as queryString from "querystring";
-import { serve } from "serve";
+
+import { serve } from "https://deno.land/std/http/mod.ts";
 
 
 /**
@@ -11,6 +11,8 @@ import { serve } from "serve";
  * @returns A response object containing the user data or an error message.
  */
 async function handleUserDataRequest(_req: Request) {
+  console.log("Hello from Functions!");
+
   console.log(_req);
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
