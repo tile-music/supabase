@@ -37,7 +37,7 @@ async function handleSpotifyCallbackRequest(_req: Request) {
   } else {
     
     await handleSpotifyCredentials(token,params)
-    const headers = new Headers({location: "http://130.215.28.32:4200/account",
+    const headers = new Headers({location: environment.FRONTEND_URL,
                                   ...corsHeaders
      })
     console.log(headers)
