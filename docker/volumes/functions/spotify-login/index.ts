@@ -19,7 +19,7 @@ import { environment} from "../_shared/environment.ts";
  */
 function handleSpotifyLogin(_req: Request) {
 
-  const scope = "user-read-currently-playing";
+  const scope = "user-read-recently-played";
   const clientId = environment.SP_CID
   const redirectUrl = environment.SP_REDIRECT
   let authHeader = _req.headers.get("Authorization") 
