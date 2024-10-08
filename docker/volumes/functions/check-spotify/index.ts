@@ -13,6 +13,7 @@ import { createSbClient } from "../_shared/client.ts";
  * stored and 0 means the user does not have spotify credentials stored
  */
 async function handleCheckSpotify(_req: Request) {
+  console.log("check spotify ")
   console.log(_req); // ripe for error handling
   let authHeader = _req.headers.get("Authorization")!;
   console.log(authHeader);
@@ -22,13 +23,15 @@ async function handleCheckSpotify(_req: Request) {
   const user = userData.user; */
   const { data: dbData, error } = await supabase
     .from("spotify_credentials")
-    .select("*");
+    .select("*")
   /* console.log(user); */
+  console.log("sanity check");
   console.log(dbData, error);
-  if (dbData.length === 0) {
-    return new Response("0", { headers: corsHeaders });
-  }else{
+  console.log("sanity check");
+  if (dbData) {
     return new Response("1", { headers: corsHeaders });
+  }else{
+    return new Response("0", { headers: corsHeaders });
   }
 }
 serve(handleCheckSpotify);

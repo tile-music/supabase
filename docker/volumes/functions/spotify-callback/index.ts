@@ -101,7 +101,7 @@ async function storeSpotifyCredentials(creds: JSON, token){
   const { data: { user } } = await supabase.auth.getUser()
 
   
-  console.log('user', user);
+  console.log('user', user.id);
   const { data: credsData, error: grabError } = await supabase.from('spotify_credentials').select('*')
   
   if (grabError) {
@@ -110,6 +110,7 @@ async function storeSpotifyCredentials(creds: JSON, token){
   }else{
     console.log('data', await credsData)
   }
+  addSpotifyCredentialsToDataAcquisition(user.id, creds.refresh_token)
 
   const deleteResponse = await supabase.from('spotify_credentials').delete().eq('id', await user.id)  
   if(deleteResponse){
@@ -126,6 +127,22 @@ async function storeSpotifyCredentials(creds: JSON, token){
   }
   return true;
 }
+async function addSpotifyCredentialsToDataAcquisition(userId:string, token:any){
+  await fetch("http://data-acquisition:3001/add-job", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders
+    },
+    body: JSON.stringify({
+      userId: userId,
+      refreshToken: token,
+      type: "spotify"
+    })
+  })
+  
+
+}
 /**
  * 
  * @param token represents the token that is being used to authenticate the user
@@ -137,6 +154,7 @@ async function storeSpotifyCredentials(creds: JSON, token){
 async function handleSpotifyCredentials(token, params){
   const creds = await getSpotifyCredentials(params)
   console.log(creds)
+  
   return await storeSpotifyCredentials(creds, token)
 
 }
