@@ -77,8 +77,8 @@ drop constraint noduplicates on table prod.albums
 CREATE TABLE test.track_albums (LIKE prod.track_albums INCLUDING ALL);
 
 
-ALTER TABLE test.track_albums DROP CONSTRAINT "track_id_ref";
-ALTER TABLE test.track_albums DROP CONSTRAINT "album_id_ref";
+-- ALTER TABLE test.track_albums DROP CONSTRAINT "track_id_ref";
+-- ALTER TABLE test.track_albums DROP CONSTRAINT "album_id_ref";
 ALTER TABLE test.track_albums ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 ALTER TABLE test.track_albums ADD CONSTRAINT album_id_ref FOREIGN KEY (track_id) REFERENCES test.albums("album_id");
 
@@ -106,22 +106,22 @@ ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id
 
 
 
--- GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
--- GRANT ALL ON ALL TABLES IN SCHEMA test TO anon, authenticated, service_role;
--- GRANT ALL ON ALL ROUTINES IN SCHEMA test TO anon, authenticated, service_role;
--- GRANT ALL ON ALL SEQUENCES IN SCHEMA test TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON TABLES TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
---
--- GRANT USAGE ON SCHEMA prod TO anon, authenticated, service_role;
--- GRANT ALL ON ALL TABLES IN SCHEMA prod TO anon, authenticated, service_role;
--- GRANT ALL ON ALL ROUTINES IN SCHEMA prod TO anon, authenticated, service_role;
--- GRANT ALL ON ALL SEQUENCES IN SCHEMA prod TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON TABLES TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
--- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
---
+GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA test TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+GRANT USAGE ON SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA prod TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
 
 -- might not need this if we have the above
 ALTER table "prod"."albums" OWNER TO "postgres";
