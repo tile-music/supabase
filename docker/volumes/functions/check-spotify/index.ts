@@ -1,6 +1,4 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
-import { serve } from "https://deno.land/std/http/mod.ts";
 import { createSbClient } from "../_shared/client.ts";
 
 /**
@@ -13,25 +11,25 @@ import { createSbClient } from "../_shared/client.ts";
  * stored and 0 means the user does not have spotify credentials stored
  */
 async function handleCheckSpotify(_req: Request) {
-  console.log("check spotify ")
-  console.log(_req); // ripe for error handling
-  let authHeader = _req.headers.get("Authorization")!;
-  console.log(authHeader);
+  // fetch authorization headers
+  const authHeader = _req.headers.get("Authorization")!;
+
+  // create an authenticated supabase client and fetch userid
+  const supabase = await createSbClient(authHeader);
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw 'Unable to fetch user.';
   
-  const supabase = await createSbClient(authHeader); 
-  /* const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user; */
+  // check if the user has linked spotify credentials
   const { data: dbData, error } = await supabase
     .from("spotify_credentials")
     .select("*")
-  /* console.log(user); */
-  console.log("sanity check");
-  console.log(dbData, error);
-  console.log("sanity check");
+    .eq("user_id", userData.user.id);
+
   if (dbData) {
     return new Response("1", { headers: corsHeaders });
-  }else{
+  } else {
+    if (error) console.error(error);
     return new Response("0", { headers: corsHeaders });
   }
 }
-serve(handleCheckSpotify);
+Deno.serve(handleCheckSpotify);
