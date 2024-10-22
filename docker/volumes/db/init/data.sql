@@ -1,4 +1,4 @@
---CREATE SCHEMA public; --this may be needed if you have errors relating to public check here
+-- CREATE SCHEMA public; --this may be needed if you have errors relating to public check here
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
@@ -9,6 +9,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 CREATE SCHEMA IF NOT EXISTS test;
 CREATE SCHEMA IF NOT EXISTS prod;
+
 -- Grant permissions on the prod schema
 GRANT USAGE ON SCHEMA prod TO public;
 GRANT CREATE ON SCHEMA prod TO public;
@@ -26,7 +27,8 @@ CREATE DOMAIN "prod"."isrc" AS "text" NOT NULL
 	CONSTRAINT "isrc_check" CHECK ((VALUE ~* '^[A-Za-z]{2}-?\w{3}-?\d{2}-?\d{5}$'::"text"));
 ALTER DOMAIN "prod"."isrc" OWNER TO "postgres";
 
-CREATE TABLE if not exists "prod"."albums"(
+-- Albums
+CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "album_id" BIGSERIAL PRIMARY KEY,
     "album_name" text,
     "album_type" text,
@@ -39,57 +41,47 @@ CREATE TABLE if not exists "prod"."albums"(
     "popularity" int,
     "image" jsonb,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image)
-
 );
 
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
-Alter table only test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image)
+ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
 
-ALTER table "prod"."albums" OWNER TO "postgres";
-ALTER table "test"."albums" OWNER TO "postgres";
+ALTER TABLE "prod"."albums" OWNER TO "postgres";
+ALTER TABLE "test"."albums" OWNER TO "postgres";
 
-
-
+-- Tracks
 CREATE TABLE IF NOT EXISTS prod."tracks" (
     track_id BIGSERIAL primary key,
     "isrc" "prod"."isrc",
-    "track_name" "text" ,
-    "track_artists" "text"[] ,
+    "track_name" "text",
+    "track_artists" "text"[],
     "track_duration_ms" integer,
-     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
+    CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
 CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);
 
-CREATE TABLE if not exists "prod"."track_albums" (
+CREATE TABLE IF NOT EXISTS "prod"."track_albums" (
     "track_id" bigint,
     "album_id" bigint,
     PRIMARY KEY ("track_id", "album_id"),
     constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX idx_unique_albums ON "prod"."albums"
-(
-    album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image
-)
-WHERE album_name IS NOT NULL;
-drop constraint prod.albums.idx_unique_albums;
-drop constraint noduplicates on table prod.albums
+
+CREATE UNIQUE INDEX idx_unique_albums
+ON "prod"."albums" (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+
 CREATE TABLE test.track_albums (LIKE prod.track_albums INCLUDING ALL);
-
-
--- ALTER TABLE test.track_albums DROP CONSTRAINT "track_id_ref";
--- ALTER TABLE test.track_albums DROP CONSTRAINT "album_id_ref";
 ALTER TABLE test.track_albums ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 ALTER TABLE test.track_albums ADD CONSTRAINT album_id_ref FOREIGN KEY (track_id) REFERENCES test.albums("album_id");
 
 ALTER table "prod"."track_albums" OWNER TO "postgres";
 ALTER table test.track_albums OWNER TO "postgres";
 
-
-
 ALTER TABLE "prod"."tracks" OWNER TO "postgres";
 ALTER TABLE "test"."tracks" OWNER TO "postgres";
 
+-- Played Tracks
 create table prod.played_tracks (
   play_id BIGSERIAL primary key not null,
   user_id uuid not null,
@@ -104,8 +96,7 @@ create table prod.played_tracks (
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 
-
-
+-- Table permissions for test & prod
 GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA test TO anon, authenticated, service_role;
 GRANT ALL ON ALL ROUTINES IN SCHEMA test TO anon, authenticated, service_role;
@@ -121,7 +112,6 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA prod TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON TABLES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
-
 
 -- might not need this if we have the above
 ALTER table "prod"."albums" OWNER TO "postgres";
@@ -159,11 +149,9 @@ GRANT ALL ON TABLE "test"."track_albums" TO "anon";
 GRANT ALL ON TABLE "test"."track_albums" TO "authenticated";
 GRANT ALL ON TABLE "test"."track_albums" TO "service_role";
 
---- continue albums here for now focus on creds
+-- continue albums here for now focus on creds
 
-
--- Credentials and profile
-
+-- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "id" "uuid" NOT NULL,
     "updated_at" timestamp with time zone,
@@ -176,6 +164,17 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
 
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+
+ALTER TABLE ONLY "public"."profiles"
+ADD CONSTRAINT "profiles_id_pkey" PRIMARY KEY ("id");
+
+ALTER TABLE ONLY "public"."profiles"
+ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+-- Spotify credentials
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
     "id" "uuid" NOT NULL,
     "refresh_token" "text"
@@ -183,17 +182,9 @@ CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
 
 ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 
-GRANT ALL ON TABLE "public"."profiles" TO "anon";
-GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
-GRANT ALL ON TABLE "public"."profiles" TO "service_role";
-
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
 
-ALTER TABLE ONLY "public"."profiles"
-    ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
 ALTER TABLE ONLY "public"."spotify_credentials"
-    ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
+ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
