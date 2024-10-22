@@ -1,116 +1,157 @@
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+-- CREATE SCHEMA public; --this may be needed if you have errors relating to public check here
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 
-CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+CREATE SCHEMA IF NOT EXISTS test;
+CREATE SCHEMA IF NOT EXISTS prod;
 
-CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";
+-- Grant permissions on the prod schema
+GRANT USAGE ON SCHEMA prod TO public;
+GRANT CREATE ON SCHEMA prod TO public;
 
-COMMENT ON SCHEMA "public" IS 'standard public schema';
+-- Grant permissions on the test schema
+GRANT USAGE ON SCHEMA test TO public;
+GRANT CREATE ON SCHEMA test TO public;
 
-CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+-- Grant object-level permissions for tables in prod schema
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA prod TO public;
 
-CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
-
-CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
-
-CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA "extensions";
-
-CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
-CREATE TYPE "public"."album" AS (
-	"album_name" "text",
-	"album_type" "text",
-	"num_tracks" smallint,
-	"release_date" "date",
-	"artists" "text"[],
-	"upc" "text",
-    "image" "text"
-
-);
-
-ALTER TYPE "public"."album" OWNER TO "postgres";
-
-CREATE DOMAIN "public"."isrc" AS "text" NOT NULL
+-- Grant object-level permissions for tables in test schema
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA test TO public;
+CREATE DOMAIN "prod"."isrc" AS "text" NOT NULL
 	CONSTRAINT "isrc_check" CHECK ((VALUE ~* '^[A-Za-z]{2}-?\w{3}-?\d{2}-?\d{5}$'::"text"));
+ALTER DOMAIN "prod"."isrc" OWNER TO "postgres";
 
-ALTER DOMAIN "public"."isrc" OWNER TO "postgres";
-
-CREATE OR REPLACE FUNCTION "public"."add_played_track"("p_isrc" "public"."isrc", "p_popularity" smallint, "p_track_album" "public"."album", "p_track_artists" "text"[], "p_track_duration_ms" integer, "p_track_name" "text", "p_user_id" "uuid", "p_listened_at" timestamp without time zone) RETURNS "void"
-    LANGUAGE "plpgsql"
-    AS $$ BEGIN
-    -- Insert the track if it does not exist
-    INSERT INTO tracks (isrc, track_name, track_artists, track_duration_ms, track_album)
-    VALUES (p_isrc, p_track_name, p_track_artists, p_track_duration_ms, p_track_album)
-    ON CONFLICT (isrc) DO NOTHING;
-
-    -- Insert into played_tracks
-    INSERT INTO played_tracks (user_id, isrc, listened_at, popularity)
-    VALUES (p_user_id, p_isrc, p_listened_at, p_popularity);
-END;
-$$;
-
-ALTER FUNCTION "public"."add_played_track"("p_isrc" "public"."isrc", "p_popularity" smallint, "p_track_album" "public"."album", "p_track_artists" "text"[], "p_track_duration_ms" integer, "p_track_name" "text", "p_user_id" "uuid", "p_listened_at" timestamp without time zone) OWNER TO "postgres";
-
-CREATE OR REPLACE FUNCTION "public"."format_music_request"("isrc" "text", "album_name" "text", "upc" "text", "ean" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql"
-    AS $$
-BEGIN
-  RETURN jsonb_build_object(
-    'isrcReq', CASE WHEN isrc IS NOT NULL THEN jsonb_build_object('isrc', isrc, 'albumName', album_name) END,
-    'upcReq', CASE WHEN upc IS NOT NULL THEN jsonb_build_object('upc', upc) END,
-    'eanReq', CASE WHEN ean IS NOT NULL THEN jsonb_build_object('ean', ean) END
-  );
-END;
-$$;
-
-ALTER FUNCTION "public"."format_music_request"("isrc" "text", "album_name" "text", "upc" "text", "ean" "text") OWNER TO "postgres";
-
-CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-begin
-  insert into public.profiles (id, full_name, avatar_url)
-  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
-  return new;
-end;
-$$;
-
-ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
-
-SET default_tablespace = '';
-
-SET default_table_access_method = "heap";
-
-CREATE TABLE IF NOT EXISTS "public"."played_tracks" (
-    "play_id" bigint NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "listened_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "popularity" smallint,
-    "isrc" "public"."isrc"
+-- Albums
+CREATE TABLE IF NOT EXISTS "prod"."albums"(
+    "album_id" BIGSERIAL PRIMARY KEY,
+    "album_name" text,
+    "album_type" text,
+    "num_tracks" int,
+    "release_date" date,
+    "artists" text[],
+    "genre" text[],
+    "upc" text,
+    "ean" text,
+    "popularity" int,
+    "image" jsonb,
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image)
 );
 
-ALTER TABLE "public"."played_tracks" OWNER TO "postgres";
+CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
+ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
 
-CREATE SEQUENCE IF NOT EXISTS "public"."played_tracks_play_id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+ALTER TABLE "prod"."albums" OWNER TO "postgres";
+ALTER TABLE "test"."albums" OWNER TO "postgres";
 
-ALTER TABLE "public"."played_tracks_play_id_seq" OWNER TO "postgres";
+-- Tracks
+CREATE TABLE IF NOT EXISTS prod."tracks" (
+    track_id BIGSERIAL primary key,
+    "isrc" "prod"."isrc",
+    "track_name" "text",
+    "track_artists" "text"[],
+    "track_duration_ms" integer,
+    CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
+);
+CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);
 
-ALTER SEQUENCE "public"."played_tracks_play_id_seq" OWNED BY "public"."played_tracks"."play_id";
+CREATE TABLE IF NOT EXISTS "prod"."track_albums" (
+    "track_id" bigint,
+    "album_id" bigint,
+    PRIMARY KEY ("track_id", "album_id"),
+    constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
+    constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
+);
 
+CREATE UNIQUE INDEX idx_unique_albums
+ON "prod"."albums" (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+
+CREATE TABLE test.track_albums (LIKE prod.track_albums INCLUDING ALL);
+ALTER TABLE test.track_albums ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+ALTER TABLE test.track_albums ADD CONSTRAINT album_id_ref FOREIGN KEY (track_id) REFERENCES test.albums("album_id");
+
+ALTER table "prod"."track_albums" OWNER TO "postgres";
+ALTER table test.track_albums OWNER TO "postgres";
+
+ALTER TABLE "prod"."tracks" OWNER TO "postgres";
+ALTER TABLE "test"."tracks" OWNER TO "postgres";
+
+-- Played Tracks
+create table prod.played_tracks (
+  play_id BIGSERIAL primary key not null,
+  user_id uuid not null,
+  track_id bigint not null,
+  listened_at  bigint  not null ,
+  popularity smallint,
+  isrc prod.isrc,
+  Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
+  Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete no action initially deferred,
+  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,popularity,isrc)
+);
+CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
+ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+
+-- Table permissions for test & prod
+GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA test TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA test TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+GRANT USAGE ON SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA prod TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA prod TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+-- might not need this if we have the above
+ALTER table "prod"."albums" OWNER TO "postgres";
+ALTER table "test"."albums" OWNER TO "postgres";
+
+GRANT ALL ON TABLE "prod"."albums" TO "anon";
+GRANT ALL ON TABLE "prod"."albums" TO "authenticated";
+GRANT ALL ON TABLE "prod"."albums" TO "service_role";
+
+GRANT ALL ON TABLE "prod"."played_tracks" TO "anon";
+GRANT ALL ON TABLE "prod"."played_tracks" TO "authenticated";
+GRANT ALL ON TABLE "prod"."played_tracks" TO "service_role";
+
+GRANT ALL ON TABLE "prod"."track_albums" TO "anon";
+GRANT ALL ON TABLE "prod"."track_albums" TO "authenticated";
+GRANT ALL ON TABLE "prod"."track_albums" TO "service_role";
+
+GRANT ALL ON TABLE "prod"."tracks" TO "anon";
+GRANT ALL ON TABLE "prod"."tracks" TO "authenticated";
+GRANT ALL ON TABLE "prod"."tracks" TO "service_role";
+
+GRANT ALL ON TABLE "test"."tracks" TO "anon";
+GRANT ALL ON TABLE "test"."tracks" TO "authenticated";
+GRANT ALL ON TABLE "test"."tracks" TO "service_role";
+
+GRANT ALL ON TABLE "test"."albums" TO "anon";
+GRANT ALL ON TABLE "test"."albums" TO "authenticated";
+GRANT ALL ON TABLE "test"."albums" TO "service_role";
+
+GRANT ALL ON TABLE "test"."played_tracks" TO "anon";
+GRANT ALL ON TABLE "test"."played_tracks" TO "authenticated";
+GRANT ALL ON TABLE "test"."played_tracks" TO "service_role";
+
+GRANT ALL ON TABLE "test"."track_albums" TO "anon";
+GRANT ALL ON TABLE "test"."track_albums" TO "authenticated";
+GRANT ALL ON TABLE "test"."track_albums" TO "service_role";
+
+-- continue albums here for now focus on creds
+
+-- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "id" "uuid" NOT NULL,
     "updated_at" timestamp with time zone,
@@ -123,6 +164,17 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
 
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+
+ALTER TABLE ONLY "public"."profiles"
+ADD CONSTRAINT "profiles_id_pkey" PRIMARY KEY ("id");
+
+ALTER TABLE ONLY "public"."profiles"
+ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+-- Spotify credentials
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
     "id" "uuid" NOT NULL,
     "refresh_token" "text"
@@ -130,153 +182,9 @@ CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
 
 ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 
-CREATE TABLE IF NOT EXISTS "public"."tracks" (
-    "isrc" "public"."isrc" NOT NULL,
-    "track_name" "text" NOT NULL,
-    "track_artists" "text"[] NOT NULL,
-    "track_duration_ms" integer NOT NULL,
-    "track_album" "public"."album" NOT NULL
-);
-
-ALTER TABLE "public"."tracks" OWNER TO "postgres";
-
-CREATE OR REPLACE VIEW "public"."track_play_details" WITH ("security_invoker"='true') AS
- SELECT "pt"."play_id",
-    "pt"."user_id",
-    "pt"."listened_at",
-    "pt"."popularity",
-    "t"."isrc",
-    "t"."track_name",
-    "t"."track_artists",
-    "t"."track_duration_ms",
-    "t"."track_album"
-   FROM ("public"."played_tracks" "pt"
-     JOIN "public"."tracks" "t" ON ((("pt"."isrc")::"text" = ("t"."isrc")::"text")))
-  ORDER BY "pt"."listened_at" DESC;
-
-ALTER TABLE "public"."track_play_details" OWNER TO "postgres";
-
-ALTER TABLE ONLY "public"."played_tracks" ALTER COLUMN "play_id" SET DEFAULT "nextval"('"public"."played_tracks_play_id_seq"'::"regclass");
-
-ALTER TABLE ONLY "public"."played_tracks"
-    ADD CONSTRAINT "played_tracks_pkey" PRIMARY KEY ("play_id");
-
-ALTER TABLE ONLY "public"."profiles"
-    ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
-
-ALTER TABLE ONLY "public"."profiles"
-    ADD CONSTRAINT "profiles_username_key" UNIQUE ("username");
-
-ALTER TABLE ONLY "public"."spotify_credentials"
-    ADD CONSTRAINT "spotify_credentials_pkey" PRIMARY KEY ("id");
-
-ALTER TABLE ONLY "public"."tracks"
-    ADD CONSTRAINT "tracks_pkey" PRIMARY KEY ("isrc");
-
-CREATE INDEX "idx_user_id" ON "public"."played_tracks" USING "btree" ("user_id");
-
-CREATE OR REPLACE TRIGGER "get_mbid" AFTER INSERT ON "public"."tracks" FOR EACH ROW EXECUTE FUNCTION "supabase_functions"."http_request"('http://192.168.1.253:54321/functions/v1/get-musicbrainz-data', 'POST', '{"Content-type":"application/json"}', '{"isrcReq":"{     isrc,    albumName   };"}', '5000');
-
-ALTER TABLE ONLY "public"."played_tracks"
-    ADD CONSTRAINT "fk_isrc" FOREIGN KEY ("isrc") REFERENCES "public"."tracks"("isrc");
-
-ALTER TABLE ONLY "public"."played_tracks"
-    ADD CONSTRAINT "played_tracks_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-ALTER TABLE ONLY "public"."profiles"
-    ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-ALTER TABLE ONLY "public"."spotify_credentials"
-    ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-CREATE POLICY "Public profiles are viewable by everyone." ON "public"."profiles" FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert their own profile." ON "public"."profiles" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-CREATE POLICY "Users can update own profile." ON "public"."profiles" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-CREATE POLICY "Users may add their own played tracks" ON "public"."played_tracks" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-CREATE POLICY "Users may add their own spotify creds" ON "public"."spotify_credentials" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-ALTER TABLE "public"."played_tracks" ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE "public"."spotify_credentials" ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "users may delete their own played tracks" ON "public"."played_tracks" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-CREATE POLICY "users may delete their own spotify creds" ON "public"."spotify_credentials" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-CREATE POLICY "users may select their own played tracks" ON "public"."played_tracks" FOR SELECT USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-CREATE POLICY "users may select their own spotify creds" ON "public"."spotify_credentials" FOR SELECT USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-CREATE POLICY "users may update their own played tracks" ON "public"."played_tracks" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-CREATE POLICY "users may update their own spotify creds" ON "public"."spotify_credentials" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
-
-/*CREATE PUBLICATION "logflare_pub" WITH (publish = 'insert, update, delete, truncate');
-
-ALTER PUBLICATION "logflare_pub" OWNER TO "supabase_admin";
-*/
-ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
-
-GRANT USAGE ON SCHEMA "public" TO "postgres";
-GRANT USAGE ON SCHEMA "public" TO "anon";
-GRANT USAGE ON SCHEMA "public" TO "authenticated";
-GRANT USAGE ON SCHEMA "public" TO "service_role";
-
-GRANT ALL ON FUNCTION "public"."add_played_track"("p_isrc" "public"."isrc", "p_popularity" smallint, "p_track_album" "public"."album", "p_track_artists" "text"[], "p_track_duration_ms" integer, "p_track_name" "text", "p_user_id" "uuid", "p_listened_at" timestamp without time zone) TO "anon";
-GRANT ALL ON FUNCTION "public"."add_played_track"("p_isrc" "public"."isrc", "p_popularity" smallint, "p_track_album" "public"."album", "p_track_artists" "text"[], "p_track_duration_ms" integer, "p_track_name" "text", "p_user_id" "uuid", "p_listened_at" timestamp without time zone) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."add_played_track"("p_isrc" "public"."isrc", "p_popularity" smallint, "p_track_album" "public"."album", "p_track_artists" "text"[], "p_track_duration_ms" integer, "p_track_name" "text", "p_user_id" "uuid", "p_listened_at" timestamp without time zone) TO "service_role";
-
-GRANT ALL ON FUNCTION "public"."format_music_request"("isrc" "text", "album_name" "text", "upc" "text", "ean" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."format_music_request"("isrc" "text", "album_name" "text", "upc" "text", "ean" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."format_music_request"("isrc" "text", "album_name" "text", "upc" "text", "ean" "text") TO "service_role";
-
-GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
-GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
-
-GRANT ALL ON TABLE "public"."played_tracks" TO "anon";
-GRANT ALL ON TABLE "public"."played_tracks" TO "authenticated";
-GRANT ALL ON TABLE "public"."played_tracks" TO "service_role";
-
-GRANT ALL ON SEQUENCE "public"."played_tracks_play_id_seq" TO "anon";
-GRANT ALL ON SEQUENCE "public"."played_tracks_play_id_seq" TO "authenticated";
-GRANT ALL ON SEQUENCE "public"."played_tracks_play_id_seq" TO "service_role";
-
-GRANT ALL ON TABLE "public"."profiles" TO "anon";
-GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
-GRANT ALL ON TABLE "public"."profiles" TO "service_role";
-
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
 
-GRANT ALL ON TABLE "public"."tracks" TO "anon";
-GRANT ALL ON TABLE "public"."tracks" TO "authenticated";
-GRANT ALL ON TABLE "public"."tracks" TO "service_role";
-
-GRANT ALL ON TABLE "public"."track_play_details" TO "anon";
-GRANT ALL ON TABLE "public"."track_play_details" TO "authenticated";
-GRANT ALL ON TABLE "public"."track_play_details" TO "service_role";
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "service_role";
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "service_role";
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "service_role";
-
-RESET ALL;
+ALTER TABLE ONLY "public"."spotify_credentials"
+ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
