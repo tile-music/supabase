@@ -6,7 +6,6 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js"
-import { serve } from "https://deno.land/std/http/mod.ts"
 
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -22,7 +21,7 @@ function handleSpotifyLogin(_req: Request) {
   const scope = "user-read-recently-played";
   const clientId = environment.SP_CID
   const redirectUrl = environment.SP_REDIRECT
-  let authHeader = _req.headers.get("Authorization") 
+  const authHeader = _req.headers.get("Authorization") 
   console.log("here is that state you need :" , authHeader )
   const spotifyString = "https://accounts.spotify.com/authorize?" +
               queryString.stringify({
@@ -34,5 +33,5 @@ function handleSpotifyLogin(_req: Request) {
               });
   return new Response( spotifyString, {headers: corsHeaders})
 }
-serve(handleSpotifyLogin);
+Deno.serve(handleSpotifyLogin);
 
