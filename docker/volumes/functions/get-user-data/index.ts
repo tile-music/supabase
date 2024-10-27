@@ -1,11 +1,22 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
 
-type song = {
-  album_art_path: string
+// these should have EXACT PARITY with (app)/songs.ts on frontend
+// make SURE these are the same after making changes
+type SongInfo = {
+  isrc: string
   title: string
   artists: string[]
-  album: string
+  duration: number
+  albums: AlbumInfo[]
+}
+
+type AlbumInfo = {
+  title: string
+  tracks: number
+  release_date: Date
+  artists: string[]
+  image: string
 }
 
 /**
@@ -28,14 +39,14 @@ async function handleUserDataRequest(_req: Request) {
     .from("played_tracks")
     .select(`
       listened_at,
-      tracks ( track_name, track_artists,
-        track_albums ( albums ( album_name, image ) )
+      tracks ( isrc, track_name, track_artists, track_duration_ms,
+        track_albums ( albums ( album_name, num_tracks, release_date, artists, image ) )
       )
     `)
     .eq("user_id", userData.user.id);
   if (error) throw error;
 
-  const songs: song[] = [];
+  const songs: SongInfo[] = [];
   for (const entry of dbData) {
     /* the supabase api thinks that tracks() and albums() return an array of objects,
     but in reality, they only return one object. as a result, we have to do some
@@ -43,13 +54,25 @@ async function handleUserDataRequest(_req: Request) {
     const track = entry.tracks as unknown as (typeof dbData)[0]["tracks"][0];
     const album = track.track_albums[0].albums as unknown as (typeof track)["track_albums"][0]["albums"][0];
 
-    // transform the relevant information into a form that the frontend can parse
-    songs.push({
-        album_art_path: album.image,
-        title: track.track_name,
-        artists: track.track_artists,
-        album: album.album_name
-    });
+    // extract album information
+    const albumInfo: AlbumInfo = {
+      title: album.album_name,
+      tracks: album.num_tracks,
+      release_date: album.release_date,
+      artists: album.artists,
+      image: album.image
+    };
+
+    // extract song information
+    const songInfo: SongInfo = {
+      isrc: track.isrc,
+      title: track.track_name,
+      artists: track.track_artists,
+      duration: track.track_duration_ms,
+      albums: [albumInfo]
+    };
+
+    songs.push(songInfo);
   }
 
   // send the list of songs as a response, or null if there are no songs
