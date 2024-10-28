@@ -8,6 +8,7 @@ type SongInfo = {
   title: string
   artists: string[]
   duration: number
+  listened_at: number
   albums: AlbumInfo[]
 }
 
@@ -69,6 +70,7 @@ async function handleUserDataRequest(_req: Request) {
       title: track.track_name,
       artists: track.track_artists,
       duration: track.track_duration_ms,
+      listened_at: entry.listened_at,
       albums: [albumInfo]
     };
 
