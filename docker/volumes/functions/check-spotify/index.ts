@@ -18,18 +18,21 @@ async function handleCheckSpotify(_req: Request) {
   const supabase = await createSbClient(authHeader);
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw 'Unable to fetch user.';
-  
+  console.log("userdata", userData.user["id"]);
+  const userId = userData.user["id"];
   // check if the user has linked spotify credentials
   const { data: dbData, error } = await supabase
     .from("spotify_credentials")
     .select("*")
-    .eq("user_id", userData.user.id);
+    .eq("id", userId);
+  console.log("test")
+  
+  console.log(dbData, "is array", Array.isArray(dbData));
 
-  if (dbData) {
-    return new Response("1", { headers: corsHeaders });
-  } else {
-    if (error) console.error(error);
-    return new Response("0", { headers: corsHeaders });
+  if (Array.isArray(dbData) && dbData.length) {
+    return new Response("spotify logged in", { headers: corsHeaders });
+  }else{
+    return new Response("spotify login not found", { headers: corsHeaders });
   }
 }
 Deno.serve(handleCheckSpotify);
