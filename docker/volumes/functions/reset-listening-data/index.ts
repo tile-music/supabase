@@ -20,14 +20,21 @@ async function handleResetListeningDataRequest(_req: Request) {
   }
 
   // remove all played tracks by this user's user id
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("played_tracks")
     .delete()
-    .eq("user_id", userData.user.id);
+    .eq("user_id", userData.user.id)
+    .select("play_id");
+
+  // handle errors
   if (error) {
     console.error(error);
     return new Response(JSON.stringify({ server_error: true }), { headers: corsHeaders });
   }
+
+  // make sure data was removed
+  if (!data.length || data.length == 0)
+    return new Response(JSON.stringify({ no_action: true }), { headers: corsHeaders });
 
   return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
 }
