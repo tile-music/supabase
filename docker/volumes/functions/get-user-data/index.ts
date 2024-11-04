@@ -1,8 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
-import type {SongInfo, AlbumInfo} from "../../../../../lib/Song";
-// these should have EXACT PARITY with (app)/songs.ts on frontend
-// make SURE these are the same after making changes
+import type {SongInfo, AlbumInfo} from "../../../../../lib/Song.ts";
 
 /**
  * Handles the user data request.
