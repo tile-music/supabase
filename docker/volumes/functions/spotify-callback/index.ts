@@ -118,25 +118,6 @@ async function storeSpotifyCredentials(creds: JSON, token){
     console.log('data', await credsData)
   }
   addSpotifyCredentialsToDataAcquisition(user.id, creds.refresh_token)
-  async function fetchProfile(token: string): Promise<any> {
-    const result = await fetch("https://api.spotify.com/v1/me", {
-        method: "GET", headers: { Authorization: `Bearer ${token}` }
-    });
-
-    return await result.json();
-  }
-  const profile = await(fetchProfile(creds.access_token));
-  console.log('profile', profile)
-  if(profile.images && profile.images.length > 0){
-    console.log('image', profile.images[0].url)
-    const { error: imageError } = await supabase.from('profiles').upsert({
-      id: user.id,
-      avatar_url: profile.images[0].url
-    })
-    if(imageError){
-      console.log('image error', imageError)
-    }
-  }
   const deleteResponse = await supabase.from('spotify_credentials').delete().eq('id', await user.id)  
   if(deleteResponse){
     console.log('delete error', deleteResponse)
