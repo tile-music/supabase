@@ -10,7 +10,6 @@ import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js"
 import { corsHeaders } from "../_shared/cors.ts";
 import { environment } from "../_shared/environment.ts";
-import { Client } from "npm:spotify-api.js@latest";
 
 
 
