@@ -33,18 +33,44 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "album_name" text,
     "album_type" text,
     "num_tracks" int,
-    "release_date" date,
+    "release_day" smallint,
+    "release_month" smallint,
+    "release_year" smallint,
     "artists" text[],
     "genre" text[],
     "upc" text,
     "ean" text,
     "popularity" int,
-    "image" jsonb,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image)
+    "image" text,
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
 );
+/*--start alteration
+
+alter table prod.albums drop column release_date;
+alter table test.albums drop column release_date;
+
+alter table prod.albums alter column image set data type text;
+alter table test.albums alter column image set data type text;
+
+alter table prod.albums add column "release_year" smallint;
+alter table prod.albums add column "release_month" smallint;
+alter table prod.albums add column "release_day" smallint;
+
+alter table prod.albums drop constraint noduplicates;
+alter table prod.albums add constraint noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, popularity, image);
+
+alter table test.albums add column "release_year" smallint;
+alter table test.albums add column "release_month" smallint;
+alter table test.albums add column "release_day" smallint;
+
+alter table test.albums add constraint noduplicates_test_albums UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image);
+
+alter table test.albums drop constraint nodups_test;
+-- end*/
 
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
-ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+--ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+--alter table test.albums add constraint noduplicates_test_albums UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
 ALTER TABLE "test"."albums" OWNER TO "postgres";
@@ -68,8 +94,8 @@ CREATE TABLE IF NOT EXISTS "prod"."track_albums" (
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_unique_albums
-ON "prod"."albums" (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+--CREATE UNIQUE INDEX idx_unique_albums
+--ON "prod"."albums" (album_name, album_type, num_tracks, release_day,release_month,release_year, artists, genre, upc, ean, popularity, image);
 
 CREATE TABLE test.track_albums (LIKE prod.track_albums INCLUDING ALL);
 ALTER TABLE test.track_albums ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
@@ -91,7 +117,7 @@ create table prod.played_tracks (
   isrc prod.isrc,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete no action initially deferred,
-  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,popularity,isrc)
+  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
 );
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
@@ -189,4 +215,4 @@ GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
 
 ALTER TABLE ONLY "public"."spotify_credentials"
-ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+ADD CONSTRAINT "spotify_credentils_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
