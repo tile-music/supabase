@@ -153,7 +153,7 @@ async function storeSpotifyCredentials(creds: JSON, token){
   return true;
 }
 async function addSpotifyCredentialsToDataAcquisition(userId:string, token:any){
-  await fetch("http://data-acquisition:3001/add-job", {
+  const resresponse = await fetch("http://data-acquisition:3001/add-job", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -165,6 +165,7 @@ async function addSpotifyCredentialsToDataAcquisition(userId:string, token:any){
       type: "spotify"
     })
   })
+  console.log(await resresponse.json())
   
 
 }
