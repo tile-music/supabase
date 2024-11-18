@@ -97,6 +97,8 @@ create table prod.played_tracks (
 );
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+
 
 -- Table permissions for test & prod
 GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
