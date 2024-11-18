@@ -44,33 +44,9 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "image" text,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
 );
-/*--start alteration
 
-alter table prod.albums drop column release_date;
-alter table test.albums drop column release_date;
-
-alter table prod.albums alter column image set data type text;
-alter table test.albums alter column image set data type text;
-
-alter table prod.albums add column "release_year" smallint;
-alter table prod.albums add column "release_month" smallint;
-alter table prod.albums add column "release_day" smallint;
-
-alter table prod.albums drop constraint noduplicates;
-alter table prod.albums add constraint noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, popularity, image);
-
-alter table test.albums add column "release_year" smallint;
-alter table test.albums add column "release_month" smallint;
-alter table test.albums add column "release_day" smallint;
-
-alter table test.albums add constraint noduplicates_test_albums UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image);
-
-alter table test.albums drop constraint nodups_test;
--- end*/
 
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
---ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
---alter table test.albums add constraint noduplicates_test_albums UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
 ALTER TABLE "test"."albums" OWNER TO "postgres";
@@ -116,7 +92,7 @@ create table prod.played_tracks (
   popularity smallint,
   isrc prod.isrc,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
-  Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete no action initially deferred,
+  Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
 );
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
@@ -214,5 +190,3 @@ GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
 
-ALTER TABLE ONLY "public"."spotify_credentials"
-ADD CONSTRAINT "spotify_credentils_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
