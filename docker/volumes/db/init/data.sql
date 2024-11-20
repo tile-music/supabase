@@ -180,8 +180,9 @@ ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("
 
 -- Spotify credentials
 
+
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
+    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
 

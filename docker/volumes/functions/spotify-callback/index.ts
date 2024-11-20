@@ -9,11 +9,7 @@ import { decode as base64Decode, encode as base64Encode } from "https://deno.lan
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js"
 import { corsHeaders } from "../_shared/cors.ts";
-import { environment } from "../_shared/environment.ts";
-import { Client } from "npm:spotify-api.js@latest";
-
-
-
+import { environment } from "../_shared/environment.ts"
 console.log("Hello from Functions!");
 
 /**
@@ -39,8 +35,6 @@ async function handleSpotifyCallbackRequest(_req: Request) {
       {headers: corsHeaders}
     );
   } else {
-
-    console.log("params",params, token)
     
     await handleSpotifyCredentials(token,params)
     const headers = new Headers({location: environment.FRONTEND_URL,
@@ -90,7 +84,6 @@ async function getSpotifyCredentials(params) : Promise<JSON>{
  * 
  * @param creds represents the spotify credentials to be stroerd
  * @param token represents the token that is being used to authenticate the user
- * @sideeffect grabs the user's spotify profile photo
  * @returns true if the credentials are stored successfully and false if they are not
  */
 async function storeSpotifyCredentials(creds: JSON, token){
@@ -118,25 +111,7 @@ async function storeSpotifyCredentials(creds: JSON, token){
     console.log('data', await credsData)
   }
   addSpotifyCredentialsToDataAcquisition(user.id, creds.refresh_token)
-  async function fetchProfile(token: string): Promise<any> {
-    const result = await fetch("https://api.spotify.com/v1/me", {
-        method: "GET", headers: { Authorization: `Bearer ${token}` }
-    });
 
-    return await result.json();
-  }
-  const profile = await(fetchProfile(creds.access_token));
-  console.log('profile', profile)
-  if(profile.images && profile.images.length > 0){
-    console.log('image', profile.images[0].url)
-    const { error: imageError } = await supabase.from('profiles').upsert({
-      id: user.id,
-      avatar_url: profile.images[0].url
-    })
-    if(imageError){
-      console.log('image error', imageError)
-    }
-  }
   const deleteResponse = await supabase.from('spotify_credentials').delete().eq('id', await user.id)  
   if(deleteResponse){
     console.log('delete error', deleteResponse)
