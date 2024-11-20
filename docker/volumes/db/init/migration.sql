@@ -1,3 +1,23 @@
+-- delete entries that share the same user id, isrc, and listen timestamp
+delete from prod.played_tracks
+where play_id in (
+  select T1.play_id from prod.played_tracks T1, prod.played_tracks T2
+  where T1.user_id = T2.user_id
+  and T1.isrc = T2.isrc
+  and T1.listened_at = T2.listened_at
+  and T1.play_id < T2.play_id
+);
+
+delete from test.played_tracks
+where play_id in (
+  select T1.play_id from test.played_tracks T1, test.played_tracks T2
+  where T1.user_id = T2.user_id
+  and T1.isrc = T2.isrc
+  and T1.listened_at = T2.listened_at
+  and T1.play_id < T2.play_id
+);
+
+-- change date structure for album release dates
 alter table prod.albums drop column release_date;
 alter table test.albums drop column release_date;
 
@@ -8,39 +28,37 @@ alter table prod.albums add column "release_year" smallint;
 alter table prod.albums add column "release_month" smallint;
 alter table prod.albums add column "release_day" smallint;
 
---alter table prod.albums drop constraint noduplicates;
-alter table prod.albums add constraint noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, image);
-
 alter table test.albums add column "release_year" smallint;
 alter table test.albums add column "release_month" smallint;
 alter table test.albums add column "release_day" smallint;
 
-alter table test.albums add constraint noduplicates_test_albums UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
+-- add new constraints for album uniqueness
+alter table prod.albums drop constraint if exists noduplicates_albums;
+alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, image);
 
---alter table test.albums drop constraint nodups_test;
+alter table test.albums drop constraint if exists noduplicates_test_albums;
+alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
 
-ALTER TABLE ONLY "public"."spotify_credentials"
-ADD CONSTRAINT "spotify_credentils_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+alter table public.spotify_credentials drop constraint if exists spotify_credentils_id_fkey;
+alter table public.spotify_credentials add constraint
+spotify_credentils_id_fkey foreign key ("id") references auth.users ("id") on delete cascade;
 
+alter table prod.played_tracks drop constraint if exists noduplicates_played;
+alter table test.played_tracks drop constraint if exists played_tracks_user_id_track_id_listened_at_popularity_isrc_key;
 
+-- make sure new played tracks are unique, regardless of popularity
+alter table prod.played_tracks drop constraint if exists "played_tracks_unique_entry";
+alter table prod.played_tracks add constraint "played_tracks_unique_entry" unique (user_id,track_id, isrc, listened_at);
 
-alter table prod.played_tracks drop constraint noduplicates_played;
-alter table test.played_tracks drop constraint played_tracks_user_id_track_id_listened_at_popularity_isrc_key;
+alter table test.played_tracks drop constraint if exists "played_tracks_unique_entry";
+alter table test.played_tracks add constraint "played_tracks_unique_entry" unique (user_id,track_id, isrc, listened_at);
 
+alter table prod.played_tracks drop constraint if exists user_id_ref;
+alter table prod.played_tracks add Constraint user_id_ref foreign key ("user_id") references "auth".users(id) on delete cascade;
 
-alter table prod.played_tracks
-add constraint "played_tracks_unique_entry" UNIQUE (user_id,track_id, isrc, listened_at);
-alter table prod.played_tracks drop constraint user_id_ref;
-alter table prod.played_tracks add Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+alter table test.played_tracks drop constraint if exists user_id_ref_test;
+alter table test.played_tracks add Constraint user_id_ref_test foreign key ("user_id") references "auth".users(id) on delete cascade;
 
-
-alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
-alter table test.played_tracks
-add constraint "played_tracks_unique_entry" UNIQUE (user_id,track_id, isrc, listened_at);
-
-UPDATE prod.albums
-SET image = REPLACE(image, '"', '')
-WHERE image LIKE '%"%' -- Only process rows containing double quotes;
-UPDATE test.albums
-SET image = REPLACE(image, '"', '')
-WHERE image LIKE '%"%' -- Only process rows containing double quotes;
+-- remove double quotes from images
+update prod.albums set image = replace(image, '"', '') where image like '%"%';
+update test.albums set image = replace(image, '"', '') where image like '%"%';
