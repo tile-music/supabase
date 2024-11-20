@@ -37,3 +37,10 @@ alter table prod.played_tracks add Constraint user_id_ref FOREIGN KEY ("user_id"
 alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 alter table test.played_tracks
 add constraint "played_tracks_unique_entry" UNIQUE (user_id,track_id, isrc, listened_at);
+
+UPDATE prod.albums
+SET image = REPLACE(image, '"', '')
+WHERE image LIKE '%"%' -- Only process rows containing double quotes;
+UPDATE test.albums
+SET image = REPLACE(image, '"', '')
+WHERE image LIKE '%"%' -- Only process rows containing double quotes;
