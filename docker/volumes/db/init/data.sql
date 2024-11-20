@@ -175,16 +175,15 @@ ALTER TABLE ONLY "public"."profiles"
 ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 -- Spotify credentials
+
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL,
+    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
+
 
 ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
-
-ALTER TABLE ONLY "public"."spotify_credentials"
-ADD CONSTRAINT "spotify_credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;

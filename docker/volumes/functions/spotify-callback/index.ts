@@ -10,6 +10,9 @@ import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js"
 import { corsHeaders } from "../_shared/cors.ts";
 import { environment } from "../_shared/environment.ts";
+
+
+
 console.log("Hello from Functions!");
 
 /**
@@ -35,6 +38,8 @@ async function handleSpotifyCallbackRequest(_req: Request) {
       {headers: corsHeaders}
     );
   } else {
+
+    console.log("params",params, token)
     
     await handleSpotifyCredentials(token,params)
     const headers = new Headers({location: environment.FRONTEND_URL,
@@ -84,6 +89,7 @@ async function getSpotifyCredentials(params) : Promise<JSON>{
  * 
  * @param creds represents the spotify credentials to be stroerd
  * @param token represents the token that is being used to authenticate the user
+ * @sideeffect grabs the user's spotify profile photo
  * @returns true if the credentials are stored successfully and false if they are not
  */
 async function storeSpotifyCredentials(creds: JSON, token){
@@ -111,7 +117,6 @@ async function storeSpotifyCredentials(creds: JSON, token){
     console.log('data', await credsData)
   }
   addSpotifyCredentialsToDataAcquisition(user.id, creds.refresh_token)
-
   const deleteResponse = await supabase.from('spotify_credentials').delete().eq('id', await user.id)  
   if(deleteResponse){
     console.log('delete error', deleteResponse)
