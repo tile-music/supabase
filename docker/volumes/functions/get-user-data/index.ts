@@ -1,8 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
-import type {SongInfo, AlbumInfo} from "../../../../../lib/Song";
-// these should have EXACT PARITY with (app)/songs.ts on frontend
-// make SURE these are the same after making changes
+import type {SongInfo, AlbumInfo} from "../../../../../lib/Song.ts";
 
 /**
  * Handles the user data request.
@@ -25,7 +23,7 @@ async function handleUserDataRequest(_req: Request) {
     .select(`
       listened_at,
       tracks ( isrc, track_name, track_artists, track_duration_ms,
-        track_albums ( albums ( album_name, num_tracks, release_date, artists, image ) )
+        track_albums ( albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image ) )
       )
     `)
     .eq("user_id", userData.user.id);
@@ -43,7 +41,9 @@ async function handleUserDataRequest(_req: Request) {
     const albumInfo: AlbumInfo = {
       title: album.album_name,
       tracks: album.num_tracks,
-      release_date: album.release_date,
+      release_day: album.release_day,
+      release_month: album.release_month,
+      release_year: album.release_year,
       artists: album.artists,
       image: album.image
     };

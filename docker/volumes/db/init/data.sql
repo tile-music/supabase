@@ -33,18 +33,20 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "album_name" text,
     "album_type" text,
     "num_tracks" int,
-    "release_date" date,
+    "release_day" smallint,
+    "release_month" smallint,
+    "release_year" smallint,
     "artists" text[],
     "genre" text[],
     "upc" text,
     "ean" text,
     "popularity" int,
-    "image" jsonb,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image)
+    "image" text,
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
 );
 
+
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
-ALTER TABLE ONLY test.albums add constraint "nodups_test" UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
 ALTER TABLE "test"."albums" OWNER TO "postgres";
@@ -68,8 +70,8 @@ CREATE TABLE IF NOT EXISTS "prod"."track_albums" (
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_unique_albums
-ON "prod"."albums" (album_name, album_type, num_tracks, release_date, artists, genre, upc, ean, popularity, image);
+--CREATE UNIQUE INDEX idx_unique_albums
+--ON "prod"."albums" (album_name, album_type, num_tracks, release_day,release_month,release_year, artists, genre, upc, ean, popularity, image);
 
 CREATE TABLE test.track_albums (LIKE prod.track_albums INCLUDING ALL);
 ALTER TABLE test.track_albums ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
@@ -90,11 +92,13 @@ create table prod.played_tracks (
   popularity smallint,
   isrc prod.isrc,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
-  Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete no action initially deferred,
-  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,popularity,isrc)
+  Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
+  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
 );
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+
 
 -- Table permissions for test & prod
 GRANT USAGE ON SCHEMA test TO anon, authenticated, service_role;
@@ -176,8 +180,9 @@ ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("
 
 -- Spotify credentials
 
+
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
+    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
 
@@ -187,3 +192,4 @@ ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
+

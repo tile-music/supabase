@@ -28,8 +28,8 @@ async function handleCheckSpotify(_req: Request) {
   console.log("test")
   
   console.log(dbData, "is array", Array.isArray(dbData));
-
-  if (Array.isArray(dbData) && dbData.length) {
+  
+  if (dbData.length >0) {
     return new Response("spotify logged in", { headers: corsHeaders });
   }else{
     return new Response("spotify login not found", { headers: corsHeaders });
