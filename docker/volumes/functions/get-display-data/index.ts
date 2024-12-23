@@ -41,18 +41,12 @@ async function handleUserDataRequest(_req: Request) {
 
 
   // if start date is provided, filter out listens before start date
-  if (body.date.start) {
-    console.log(body.date.start);
-    const startTimestamp = Math.floor(new Date(body.date.start).getTime());
-    console.log("timestamp:", startTimestamp);
-    query = query.gte("listened_at", startTimestamp);
-  }
+  if (body.date.start) query = query.gte("listened_at", body.date.start);
 
   // if end date is provided, filter out listens after end date (inclusive)
   if (body.date.end) {
-    const endDate = new Date(body.date.end);
-    endDate.setDate(endDate.getDate() + 1);
-    query = query.lte("listened_at", Math.floor(endDate.getTime()));
+    const endTimestamp = body.date.end + 86400000 // add 24 hours
+    query = query.lte("listened_at", endTimestamp);
   }
 
   // execute query
@@ -189,36 +183,14 @@ function validateDisplayDataRequest(req: unknown): DisplayDataRequest {
         throw "Invalid request: missing date";
 
     if (!("start" in req.date)) throw "Invalid request: start date is missing";
-    if (!validateDate(req.date.start)) throw 'Invalid request: start date is invalid';
+    if (req.date.start != null && !Number.isInteger(req.date.start)) throw 'Invalid request: start date is invalid';
 
     if (!("end" in req.date)) throw "Invalid request: end date is missing";
-    if (!validateDate(req.date.end)) throw "Invalid request: end date is invalid";
+    if (req.date.end != null && !Number.isInteger(req.date.end)) throw "Invalid request: end date is invalid";
 
     if (!("rank_determinant" in req)) throw "Invalid request: rank determinant is missing";
     if (req.rank_determinant !== "listens" && req.rank_determinant !== "time")
         throw "Invalid request: rank determinant is invalid";
 
     return req as DisplayDataRequest;
-}
-
-/**
- * Ensures that a given HTML date input value is valid.
- * 
- * @param dateString The string to verify
- * @returns Whether or not the string is a valid HTML data input value
- */
-function validateDate(dateString: unknown): boolean {
-  if (dateString === null) return true;
-  if (typeof dateString !== "string") return false;
-
-  // make sure date format is valid
-  const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[0-1])/;
-  if (!dateRegex.test(dateString)) return false;
-
-  // make sure date is valid using JS date parsing
-  // not super reliable, which is why it's loosely tested earlier
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return false;
-
-  return true;
 }
