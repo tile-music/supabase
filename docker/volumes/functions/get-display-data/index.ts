@@ -164,7 +164,7 @@ function rankSongs(
  * @returns A request body that matches the format of DisplayDataRequest,
  *  or an error if unsuccessful
  */
-function validateDisplayDataRequest(req: unknown): DisplayDataRequest {
+export function validateDisplayDataRequest(req: unknown): DisplayDataRequest {
     if (typeof req !== "object" || req == null) throw "Invalid request: body is not an object";
 
     // aggregate
@@ -182,11 +182,14 @@ function validateDisplayDataRequest(req: unknown): DisplayDataRequest {
     if (!("date" in req) || typeof req.date !== "object" || req.date == null)
         throw "Invalid request: missing date";
 
-    if (!("start" in req.date)) throw "Invalid request: start date is missing";
+    if (!("start" in req.date) || req.date.start === undefined) throw "Invalid request: start date is missing";
     if (req.date.start != null && !Number.isInteger(req.date.start)) throw 'Invalid request: start date is invalid';
 
-    if (!("end" in req.date)) throw "Invalid request: end date is missing";
+    if (!("end" in req.date) || req.date.end === undefined) throw "Invalid request: end date is missing";
     if (req.date.end != null && !Number.isInteger(req.date.end)) throw "Invalid request: end date is invalid";
+
+    if (req.date.start !== null && req.date.end !== null &&
+      req.date.end! < req.date.start!) throw "Invalid request: end date is before start date";
 
     if (!("rank_determinant" in req)) throw "Invalid request: rank determinant is missing";
     if (req.rank_determinant !== "listens" && req.rank_determinant !== "time")
