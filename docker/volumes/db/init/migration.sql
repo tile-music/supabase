@@ -17,6 +17,12 @@ where play_id in (
   and T1.play_id < T2.play_id
 );
 
+/*
+todo add album id migration script
+*/
+
+
+
 -- change date structure for album release dates
 alter table prod.albums drop column release_date;
 alter table test.albums drop column release_date;
@@ -43,6 +49,38 @@ alter table public.spotify_credentials drop constraint if exists spotify_credent
 alter table public.spotify_credentials add constraint
 spotify_credentils_id_fkey foreign key ("id") references auth.users ("id") on delete cascade;
 
+-- we have to do this because for some reason if exists does not exist for this accoding to chat and stack overflow
+DO $$
+BEGIN
+    -- For the production schema
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'prod'
+          AND table_name = 'played_tracks'
+          AND column_name = 'popularity'
+    ) THEN
+        EXECUTE 'ALTER TABLE prod.played_tracks RENAME COLUMN "popularity" TO "track_popularity"';
+    END IF;
+
+    -- For the test schema
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'test'
+          AND table_name = 'played_tracks'
+          AND column_name = 'popularity'
+    ) THEN
+        EXECUTE 'ALTER TABLE test.played_tracks RENAME COLUMN "popularity" TO "track_popularity"';
+    END IF;
+END $$;
+
+alter table prod.played_tracks add column album_popularity smallint;
+alter table test.played_tracks add column album_popularity smallint;
+
+alter table prod.played_tracks add column album_id bigint;
+alter table test.played_tracks add column album_id bigint;
+
 alter table prod.played_tracks drop constraint if exists noduplicates_played;
 alter table test.played_tracks drop constraint if exists played_tracks_user_id_track_id_listened_at_popularity_isrc_key;
 
@@ -58,6 +96,31 @@ alter table prod.played_tracks add Constraint user_id_ref foreign key ("user_id"
 
 alter table test.played_tracks drop constraint if exists user_id_ref_test;
 alter table test.played_tracks add Constraint user_id_ref_test foreign key ("user_id") references "auth".users(id) on delete cascade;
+
+alter table prod.played_tracks drop constraint if exists album_id_ref;
+alter table prod.played_tracks add constraint album_id_ref foreign key ("album_id") references "prod".albums(album_id) on delete cascade;
+
+alter table test.played_tracks drop constraint if exists album_id_ref;
+alter table test.played_tracks add constraint album_id_ref foreign key ("album_id") references "test".albums(album_id) on delete cascade;
+
+
+-- Update the prod schema played_tracks table
+DO $$
+BEGIN
+    UPDATE prod.played_tracks AS pt
+    SET album_id = ta.album_id
+    FROM prod.track_albums AS ta
+    WHERE pt.track_id = ta.track_id;
+END $$;
+
+-- Update the test schema played_tracks table
+DO $$
+BEGIN
+    UPDATE test.played_tracks AS pt
+    SET album_id = ta.album_id
+    FROM test.track_albums AS ta
+    WHERE pt.track_id = ta.track_id;
+END $$;
 
 -- remove double quotes from images
 update prod.albums set image = replace(image, '"', '') where image like '%"%';
