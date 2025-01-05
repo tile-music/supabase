@@ -133,3 +133,4 @@ gcloud.json
 # sitemaps
 # apps/www/public/*.xml
 # apps/docs/public/*.xml
+docker/volumes/functions/_shared/environment.ts
