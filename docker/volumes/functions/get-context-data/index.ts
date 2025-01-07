@@ -32,13 +32,13 @@ async function handleContextDataRequest(_req: Request) {
   .from("played_tracks")
   .select(`
     listened_at,
-    tracks ( isrc, track_name, track_artists, track_duration_ms,
-      track_albums ( albums ( album_name, num_tracks, release_day,
+    tracks!inner( isrc, track_name, track_artists, track_duration_ms,
+      track_albums!inner( albums!inner( album_name, num_tracks, release_day,
         release_month, release_year, artists, image ) )
     )
   `)
   .eq("user_id", userData.user.id)
-  .eq("image", body.upc);
+  .eq("tracks.track_albums.albums.image", body.upc);
 
 
   // if start date is provided, filter out listens before start date
@@ -90,9 +90,12 @@ async function handleContextDataRequest(_req: Request) {
   const rankedSongs = rankSongsFromAlbum(songs, body.rank_determinant);
 
   // send the list of songs as a response, or null if there are no songs
-  let response: ContextDataResponse = null;
-  if (songs.length >= 0) response = { songs: rankedSongs };
-  return new Response(JSON.stringify(response), { headers: corsHeaders });
+  if (songs.length >= 0) {
+    const response: ContextDataResponse = { songs: rankedSongs };
+    return new Response(JSON.stringify(response), { headers: corsHeaders });
+  } else {
+    return new Response("Unable to retrieve song data.", { status: 500, headers: corsHeaders});
+  }
 }
 Deno.serve(handleContextDataRequest);
 
