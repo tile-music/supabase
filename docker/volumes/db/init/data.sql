@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "ean" text,
     "popularity" int,
     "image" text,
+    "spotify_id" text,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
 );
 
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     "track_name" "text",
     "track_artists" "text"[],
     "track_duration_ms" integer,
+    "spotify_id" text,
     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
 CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);

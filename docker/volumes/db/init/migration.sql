@@ -38,12 +38,24 @@ alter table test.albums add column "release_year" smallint;
 alter table test.albums add column "release_month" smallint;
 alter table test.albums add column "release_day" smallint;
 
+alter table prod.albums drop column popularity;
+alter table test.albums drop column popularity;
+
+-- album spotify id
+alter table prod.albums add column "spotify_id" text;
+alter table test.albums add column "spotify_id" text;
+
 -- add new constraints for album uniqueness
 alter table prod.albums drop constraint if exists noduplicates_albums;
 alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, image);
 
 alter table test.albums drop constraint if exists noduplicates_test_albums;
 alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
+
+-- track spotify id
+
+alter table prod.tracks add column "spotify_id" text;
+alter table test.tracks add column "spotify_id" text;
 
 alter table public.spotify_credentials drop constraint if exists spotify_credentils_id_fkey;
 alter table public.spotify_credentials add constraint
