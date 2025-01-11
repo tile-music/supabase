@@ -181,7 +181,6 @@ services:
       PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
       PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY}
     command: "postgrest"
-
   realtime:
     # This container name looks inconsistent but is correct because realtime constructs tenant id by parsing the subdomain
     container_name: realtime-dev.supabase-realtime
@@ -392,6 +391,7 @@ services:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${SB_POSTGRES_PORT}
       POSTGRES_PORT: ${SB_POSTGRES_PORT}
+      POSTGRES_USER: ${SB_POSTGRES_USER}
       PGPASSWORD: ${SB_POSTGRES_PASSWORD}
       POSTGRES_PASSWORD: ${SB_POSTGRES_PASSWORD}
       PGDATABASE: ${SB_POSTGRES_DB}

@@ -1,0 +1,11 @@
+{
+    "imports": {
+      "decoding": "https://deno.land/std@0.166.0/encoding/base64.ts",
+      "assert":  "https://deno.land/std@0.166.0/testing/asserts.ts",
+      "crypto": "https://deno.land/x/crypto_random_string@1.0.0/mod.ts",
+      "querystring": "https://deno.land/x/querystring@v1.0.2/mod.js",
+      "serve": "https://deno.land/std/http/mod.ts",
+      "supabase": "https://esm.sh/@supabase/supabase-js",
+      "musicbrainz" : "npm:/musicbrainz-api@0.15.0"
+    }
+  }
