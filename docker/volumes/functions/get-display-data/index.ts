@@ -1,5 +1,5 @@
-import { corsHeaders } from "../_shared copy/cors.js";
-import { createSbClient } from "../_shared copy/client.js";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createSbClient } from "../_shared/client.ts";
 import type { SongInfo, AlbumInfo } from "../../../../../lib/Song.ts";
 import type { DisplayDataRequest, RankOutput } from "../../../../../lib/Request.ts";
 

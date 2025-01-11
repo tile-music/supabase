@@ -4,8 +4,8 @@ import {
   assertEquals,
 } from "https://deno.land/std@0.192.0/testing/asserts.ts";
 
-import { createSbServiceClient } from "../_shared copy/service_client.js";
-import { handleAlbumArtHelper, putArtworkInDB } from "../_shared copy/musicbrainz.js";
+import { createSbServiceClient } from "../_shared/service_client.ts";
+import { handleAlbumArtHelper, putArtworkInDB } from "../_shared/musicbrainz.ts";
 // Set up the configuration for the Supabase client
 
 const options = {

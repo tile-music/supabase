@@ -7,9 +7,9 @@
 
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js"
 
-import { corsHeaders } from "../_shared copy/cors.js";
+import { corsHeaders } from "../_shared/cors.ts";
 
-import { environment} from "../_shared copy/environment.js";
+import { environment} from "../_shared/environment.ts";
 /**
  * 
  * @param _req request from client which must contain the token representing the user's session

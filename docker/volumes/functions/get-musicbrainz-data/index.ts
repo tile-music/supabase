@@ -1,6 +1,6 @@
-import { corsHeaders } from "../_shared copy/cors.js";
+import { corsHeaders } from "../_shared/cors.ts";
 import { serve } from "serve";
-import { handleIsrcRequest, MusicRequest, handleEanRequest,handleUpcRequest,translateDBEntryToMusicRequest } from "../_shared copy/musicbrainz.js"
+import { handleIsrcRequest, MusicRequest, handleEanRequest,handleUpcRequest,translateDBEntryToMusicRequest } from "../_shared/musicbrainz.ts"
 
 /**
  * This function handles a request containing an isrc, ean, or upc and returns the corresponding musicbrainz data...
