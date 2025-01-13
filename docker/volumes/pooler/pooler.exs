@@ -9,7 +9,7 @@
 params = %{
   "external_id" => System.get_env("POOLER_TENANT_ID"),
   "db_host" => "db",
-  "db_port" => System.get_env(POSTGRES_PORT"),
+  "db_port" => System.get_env("POSTGRES_PORT"),
   "db_database" => System.get_env("POSTGRES_DB"),
   "require_user" => false,
   "auth_query" => "SELECT * FROM pgbouncer.get_auth($1)",

@@ -1,4 +1,4 @@
--- CREATE SCHEMA public; --this may be needed if you have errors relating to public check here
+≠-- CREATE SCHEMA public; --this may be needed if you have errors relating to public check here
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "ean" text,
     "popularity" int,
     "image" text,
+    "spotify_id" text,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
 );
 
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     "track_name" "text",
     "track_artists" "text"[],
     "track_duration_ms" integer,
+    "spotify_id" text,
     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
 CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);
@@ -88,15 +90,19 @@ create table prod.played_tracks (
   play_id BIGSERIAL primary key not null,
   user_id uuid not null,
   track_id bigint not null,
+  album_id bigint not null,
   listened_at  bigint  not null ,
-  popularity smallint,
+  track_popularity smallint,
+  album_popularity smallint,
   isrc prod.isrc,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
+  Constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
 );
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+ALTER Table test.played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
 alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 
