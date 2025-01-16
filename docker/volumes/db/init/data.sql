@@ -94,6 +94,7 @@ create table prod.played_tracks (
   listened_at  bigint  not null ,
   track_popularity smallint,
   album_popularity smallint,
+  album_popularity_updated_at bigint,
   isrc prod.isrc,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,

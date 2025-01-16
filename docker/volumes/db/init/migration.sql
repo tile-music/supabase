@@ -22,7 +22,6 @@ todo add album id migration script
 */
 
 
-
 -- change date structure for album release dates
 alter table prod.albums drop column release_date;
 alter table test.albums drop column release_date;
@@ -89,6 +88,9 @@ END $$;
 
 alter table prod.played_tracks add column album_popularity smallint;
 alter table test.played_tracks add column album_popularity smallint;
+
+alter table prod.played_tracks add column album_popularity_updated_at bigint;
+alter table test.played_tracks add column album_popularity_updated_at bigint;
 
 alter table prod.played_tracks add column album_id bigint;
 alter table test.played_tracks add column album_id bigint;
