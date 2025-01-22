@@ -40,17 +40,16 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "genre" text[],
     "upc" text,
     "ean" text,
-    "popularity" int,
     "image" text,
     "spotify_id" text,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, popularity, image)
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
 );
 
 
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
-ALTER TABLE "test"."albums" OWNER TO "postgres";
+ALTER TABLE "test"."albums" OWNER TO "postgres";test.albums
 
 -- Tracks
 CREATE TABLE IF NOT EXISTS prod."tracks" (
