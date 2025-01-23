@@ -1,9 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { useParams } from 'common'
 import { useContentUpsertMutation } from 'data/content/content-upsert-mutation'
-import { contentKeys } from 'data/content/keys'
 import { Snippet } from 'data/content/sql-folders-query'
 import { useSqlEditorV2StateSnapshot } from 'state/sql-editor-v2'
 import { TabsContent_Shadcn_, TabsList_Shadcn_, TabsTrigger_Shadcn_, Tabs_Shadcn_ } from 'ui'
@@ -43,7 +41,6 @@ const UtilityPanel = ({
   onDebug,
 }: UtilityPanelProps) => {
   const { ref } = useParams()
-  const queryClient = useQueryClient()
   const snapV2 = useSqlEditorV2StateSnapshot()
 
   const snippet = snapV2.snippets[id]?.snippet
