@@ -17,10 +17,6 @@ where play_id in (
   and T1.play_id < T2.play_id
 );
 
-/*
-todo add album id migration script
-*/
-
 
 -- change date structure for album release dates
 alter table prod.albums drop column release_date;

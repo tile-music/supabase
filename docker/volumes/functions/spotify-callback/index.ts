@@ -9,8 +9,6 @@ import { decode as base64Decode, encode as base64Encode } from "https://deno.lan
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js"
 import { corsHeaders } from "../_shared/cors.ts";
-import { environment } from "../_shared/environment.ts"
-console.log("Hello from Functions!");
 
 /**
  * 
@@ -37,7 +35,7 @@ async function handleSpotifyCallbackRequest(_req: Request) {
   } else {
     
     await handleSpotifyCredentials(token,params)
-    const headers = new Headers({location: environment.FRONTEND_URL,
+    const headers = new Headers({location: Deno.env.get('FRONTEND_URL'),
                                   ...corsHeaders
      })
     console.log(headers)
@@ -56,9 +54,9 @@ async function handleSpotifyCallbackRequest(_req: Request) {
  * @returns 
  */
 async function getSpotifyCredentials(params) : Promise<JSON>{
-  const clientSecret = environment.SP_SECRET
-  const clientId = environment.SP_CID
-  const redirectUrl = environment.SP_REDIRECT
+  const clientSecret = Deno.env.get('SP_SECRET')
+  const clientId = Deno.env.get('SP_CID')
+  const redirectUrl = Deno.env.get('SP_REDIRECT')
   const encodedCredentials = base64Encode(clientId + ":" + clientSecret)
   console.log(encodedCredentials)
   const response =  fetch("https://accounts.spotify.com/api/token",{
