@@ -17,11 +17,6 @@ where play_id in (
   and T1.play_id < T2.play_id
 );
 
-/*
-todo add album id migration script
-*/
-
-
 
 -- change date structure for album release dates
 alter table prod.albums drop column release_date;
@@ -47,10 +42,10 @@ alter table test.albums add column "spotify_id" text;
 
 -- add new constraints for album uniqueness
 alter table prod.albums drop constraint if exists noduplicates_albums;
-alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, upc, ean, image);
+alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, image);
 
 alter table test.albums drop constraint if exists noduplicates_test_albums;
-alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, upc, ean, image);
+alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, image);
 
 -- track spotify id
 
@@ -89,6 +84,9 @@ END $$;
 
 alter table prod.played_tracks add column album_popularity smallint;
 alter table test.played_tracks add column album_popularity smallint;
+
+alter table prod.played_tracks add column album_popularity_updated_at bigint;
+alter table test.played_tracks add column album_popularity_updated_at bigint;
 
 alter table prod.played_tracks add column album_id bigint;
 alter table test.played_tracks add column album_id bigint;

@@ -9,7 +9,6 @@ import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js"
 
 import { corsHeaders } from "../_shared/cors.ts";
 
-import { environment} from "../_shared/environment.ts";
 /**
  * 
  * @param _req request from client which must contain the token representing the user's session
@@ -19,8 +18,8 @@ import { environment} from "../_shared/environment.ts";
 function handleSpotifyLogin(_req: Request) {
 
   const scope = "user-read-recently-played";
-  const clientId = environment.SP_CID
-  const redirectUrl = environment.SP_REDIRECT
+  const clientId = Deno.env.get('SP_CID')
+  const redirectUrl = Deno.env.get('SP_REDIRECT')
   const authHeader = _req.headers.get("Authorization") 
   console.log("here is that state you need :" , authHeader )
   const spotifyString = "https://accounts.spotify.com/authorize?" +
