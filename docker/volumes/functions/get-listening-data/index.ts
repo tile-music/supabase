@@ -8,7 +8,7 @@ import type {SongInfo, AlbumInfo} from "../../../../../lib/Song.ts";
  * @param _req - The request object.
  * @returns A response object containing the user's played tracks' or null if empty.
  */
-async function handleUserDataRequest(_req: Request) {
+async function handleListeningDataRequest(_req: Request) {
   // create authenticated supabase client scoped to the "prod" schema
   const authHeader = _req.headers.get("Authorization")!;
   const supabase = await createSbClient(authHeader, "prod");
@@ -68,4 +68,14 @@ async function handleUserDataRequest(_req: Request) {
     return new Response(JSON.stringify(songs), { headers: corsHeaders });
   }
 }
-Deno.serve(handleUserDataRequest);
+
+function validateDisplayDataRequest(body: unknown) {
+  if (typeof body !== "object") throw "Invalid request body";
+  
+  if (typeof body.date !== "object") throw "Invalid date filter";
+  if (typeof body.date.start !== "number" && body.date.start !== undefined) throw "Invalid start date";
+  if (typeof body.date.end !== "number" && body.date.end !== undefined) throw "Invalid end date";
+  return body;
+}
+
+Deno.serve(handleListeningDataRequest);

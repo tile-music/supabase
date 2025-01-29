@@ -170,7 +170,7 @@ export function validateDisplayDataRequest(req: unknown): DisplayDataRequest {
     // aggregate
     if (!("aggregate" in req)) throw "Invalid request: missing aggregate";
     if (req.aggregate !== "song" && req.aggregate !== "album")
-        throw "Invalid request: aggregate is invalid";
+        throw "Invalid request: aggregate is invalid"
 
     // num_cells
     if (!("num_cells" in req)) throw "Invalid request: missing number of cells";
