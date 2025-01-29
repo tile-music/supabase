@@ -42,10 +42,10 @@ alter table test.albums add column "spotify_id" text;
 
 -- add new constraints for album uniqueness
 alter table prod.albums drop constraint if exists noduplicates_albums;
-alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, image);
+alter table prod.albums add constraint noduplicates_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day, release_month, release_year, artists, genre, image, spotify_id);
 
 alter table test.albums drop constraint if exists noduplicates_test_albums;
-alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, image);
+alter table test.albums add constraint noduplicates_test_albums unique nulls not distinct (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, image, spotify_id);
 
 -- track spotify id
 

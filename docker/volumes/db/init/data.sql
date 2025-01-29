@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "ean" text,
     "image" text,
     "spotify_id" text,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, spotify_id)
 );
 
 
