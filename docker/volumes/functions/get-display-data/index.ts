@@ -1,7 +1,8 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
-import type { SongInfo, AlbumInfo } from "../../../../../lib/Song.ts";
+import type { SongInfo } from "../../../../../lib/Song.ts";
 import type { DisplayDataRequest, RankOutput } from "../../../../../lib/Request.ts";
+import { constructQuery, processPlayedTracksData } from "../_shared/query.ts";
 
 /**
  * Handles requests for art display data, querying a user's list of played tracks and
@@ -28,17 +29,7 @@ async function handleUserDataRequest(_req: Request) {
   catch (error) { return new Response(error, { status: 400, headers: corsHeaders }); }
 
   // fetch the track and album information for the current user's played tracks
-  let query = supabase
-  .from("played_tracks")
-  .select(`
-    listened_at,
-    tracks ( isrc, track_name, track_artists, track_duration_ms,
-      track_albums ( albums ( album_name, num_tracks, release_day,
-        release_month, release_year, artists, image ) )
-    )
-  `)
-  .eq("user_id", userData.user.id);
-
+  let query = constructQuery(supabase, userData.user.id);
 
   // if start date is provided, filter out listens before start date
   if (body.date.start) query = query.gte("listened_at", body.date.start);
@@ -53,37 +44,8 @@ async function handleUserDataRequest(_req: Request) {
   const { data: dbData, error } = await query;
   if (error) throw error;
 
-  const songs: SongInfo[] = [];
-  for (const entry of dbData) {
-    // the supabase api thinks that tracks() and track_albums() return an array of objects,
-    // but in reality, they only return one object. as a result, we have to do some
-    // pretty ugly typecasting to make the compiler happy
-    const track = entry.tracks as unknown as (typeof dbData)[0]["tracks"][0];
-    const album = track.track_albums[0].albums as unknown as (typeof track)["track_albums"][0]["albums"][0];
-
-    // extract album information
-    const albumInfo: AlbumInfo = {
-      title: album.album_name,
-      tracks: album.num_tracks,
-      release_day: album.release_day,
-      release_month: album.release_month,
-      release_year: album.release_year,
-      artists: album.artists,
-      image: album.image
-    };
-
-    // extract song information
-    const songInfo: SongInfo = {
-      isrc: track.isrc,
-      title: track.track_name,
-      artists: track.track_artists,
-      duration: track.track_duration_ms,
-      listened_at: entry.listened_at,
-      albums: [albumInfo]
-    };
-
-    songs.push(songInfo);
-  }
+  // process songs into SongInfo and AlbumInfo types
+  const songs = processPlayedTracksData(dbData);
 
   // filter songs by the requested number of cells if given
   let rankedSongs = rankSongs(songs, body.aggregate, body.rank_determinant);
