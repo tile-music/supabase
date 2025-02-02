@@ -134,3 +134,4 @@ gcloud.json
 # apps/www/public/*.xml
 # apps/docs/public/*.xml
 docker/volumes/functions/_shared/environment.ts
+docker/.env.prod
