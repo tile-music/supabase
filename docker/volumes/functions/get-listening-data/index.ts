@@ -32,7 +32,7 @@ async function handleListeningDataRequest(_req: Request) {
     .from("played_tracks")
     .select(`
       listened_at,
-      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id),
+      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id ),
       album-sec:albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, spotify_id, upc, spotify_id)
     `)
     .eq("user_id", userData.user.id)
@@ -111,6 +111,8 @@ function getSortCol(body: ListeningColumns): SortCol | null {
           return { column: albumSecHelper("spotify_id"), order: body[key]?.order };
         case "isrc":
           return { column: trackSecHelper("isrc"), order: body[key]?.order };
+        case "upc":
+          return { column: albumSecHelper("upc"), order: body[key]?.order}
         default:
           return { column: key, order: body[key]?.order };
       }
