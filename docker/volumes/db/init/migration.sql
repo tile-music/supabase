@@ -135,3 +135,7 @@ END $$;
 -- remove double quotes from images
 update prod.albums set image = replace(image, '"', '') where image like '%"%';
 update test.albums set image = replace(image, '"', '') where image like '%"%';
+
+-- add profile theme column
+alter table public.profiles add column "theme" text;
+update public.profiles set theme = 'dark' where theme is null;
