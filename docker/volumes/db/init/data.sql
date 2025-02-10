@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "ean" text,
     "image" text,
     "spotify_id" text,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre, spotify_id)
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
 );
 
 
@@ -169,6 +169,7 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "full_name" "text",
     "avatar_url" "text",
     "website" "text",
+    "theme" "text",
     CONSTRAINT "username_length" CHECK (("char_length"("username") >= 3))
 );
 
