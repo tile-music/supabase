@@ -316,8 +316,10 @@ services:
     container_name: supabase-edge-functions
     image: supabase/edge-runtime:v1.66.4
     restart: unless-stopped
+    #so silly it works this is for the path location being the same for lib as it is in the folder structure
     volumes:
-      - ./volumes/functions:/home/deno/functions:Z
+      - ./volumes/functions:/home/cum/balls/deno/functions:Z
+      - ../../lib:/home/lib
     depends_on:
       analytics:
         condition: service_healthy
@@ -338,7 +340,7 @@ services:
       [
         "start",
         "--main-service",
-        "/home/deno/functions/main"
+        "/home/cum/balls/deno/functions/main"
       ]
 
   analytics:
