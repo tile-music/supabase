@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  const servicePath = `/home/deno/functions/${service_name}`
+  const servicePath = `/home/cum/balls/deno/functions/${service_name}`
   console.error(`serving the request with ${servicePath}`)
 
   const memoryLimitMb = 150
