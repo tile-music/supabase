@@ -1,6 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
-import type { SongInfo, AlbumInfo } from "../../../../../lib/Song.ts";
+import type { SongInfo, AlbumInfo, ListeningDataSongInfo } from "../../../../../lib/Song.ts";
 import type { ListeningColumns, ListeningDataRequest, ListeningColumnKeys, ListeningColumn } from "../../../../../lib/Request.ts";
 import { assertListeningColumns } from "../_shared/validate_listening.ts";
 type SortCol = {column: string, order: string}
@@ -63,18 +63,23 @@ async function handleListeningDataRequest(_req: Request) {
       artists: album.artists,
       image: album.image,
       upc: album.upc,
-      spotify_id: album.spotify_id
+      spotify_id: album.spotify_id,
     };
 
-    // extract song information
-    const songInfo: SongInfo = {
+    /* extract song information  we set the state for */
+    const songInfo: ListeningDataSongInfo = {
       isrc: track.isrc,
       title: track.track_name,
       artists: track.track_artists,
       duration: track.track_duration_ms,
       listened_at: entry.listened_at,
       spotify_id: track.spotify_id,
-      albums: [albumInfo]
+      albums: [albumInfo],
+      is_child: false,
+      has_children: false,
+      is_parent: false,
+      inserted: false,
+      size: 0,
     };
 
     songs.push(songInfo);
