@@ -78,7 +78,6 @@ async function handleListeningDataRequest(_req: Request) {
       is_child: false,
       has_children: false,
       is_parent: false,
-      inserted: false,
       size: 0,
     };
 
