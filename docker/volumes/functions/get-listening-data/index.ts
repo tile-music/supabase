@@ -76,9 +76,9 @@ async function handleListeningDataRequest(_req: Request) {
       spotify_id: track.spotify_id,
       albums: [albumInfo],
       is_child: false,
-      has_children: false,
       is_parent: false,
-      size: 0,
+      children: [],
+      show_children: false
     };
 
     songs.push(songInfo);
