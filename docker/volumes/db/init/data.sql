@@ -100,10 +100,21 @@ create table prod.played_tracks (
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
 );
+
+CREATE TABLE prod.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
+ALTER TABLE prod.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES prod.tracks("track_id");
+ALTER Table prod.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references prod.albums("album_id");
+alter table prod.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 ALTER Table test.played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
 alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+
+CREATE table test.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
+ALTER TABLE test.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+ALTER Table test.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
+alter table test.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 
 -- Table permissions for test & prod
@@ -135,6 +146,10 @@ GRANT ALL ON TABLE "prod"."played_tracks" TO "anon";
 GRANT ALL ON TABLE "prod"."played_tracks" TO "authenticated";
 GRANT ALL ON TABLE "prod"."played_tracks" TO "service_role";
 
+GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "anon";
+GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "authenticated";
+GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "service_role";
+
 GRANT ALL ON TABLE "prod"."track_albums" TO "anon";
 GRANT ALL ON TABLE "prod"."track_albums" TO "authenticated";
 GRANT ALL ON TABLE "prod"."track_albums" TO "service_role";
@@ -154,6 +169,10 @@ GRANT ALL ON TABLE "test"."albums" TO "service_role";
 GRANT ALL ON TABLE "test"."played_tracks" TO "anon";
 GRANT ALL ON TABLE "test"."played_tracks" TO "authenticated";
 GRANT ALL ON TABLE "test"."played_tracks" TO "service_role";
+
+GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "anon";
+GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "authenticated";
+GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "service_role";
 
 GRANT ALL ON TABLE "test"."track_albums" TO "anon";
 GRANT ALL ON TABLE "test"."track_albums" TO "authenticated";
