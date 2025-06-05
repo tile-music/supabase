@@ -186,13 +186,10 @@ ALTER TABLE ONLY "public"."profiles"
 ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 -- Spotify credentials
-
-
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
     "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
-
 
 ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 
@@ -200,3 +197,13 @@ GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
 
+-- Avatar images
+INSERT INTO storage.buckets
+    (id, name, public)
+VALUES
+    ('avatars', 'avatars', true);
+
+CREATE POLICY "Authenticated users can select avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can upload avatars" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can delete avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can update avatars" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars');
