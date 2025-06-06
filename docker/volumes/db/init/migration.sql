@@ -139,3 +139,15 @@ update test.albums set image = replace(image, '"', '') where image like '%"%';
 -- add profile theme column
 alter table public.profiles add column "theme" text;
 update public.profiles set theme = 'dark' where theme is null;
+
+-- add avatar bucket
+INSERT INTO storage.buckets
+    (id, name, public)
+VALUES
+    ('avatars', 'avatars', true);
+
+-- add policies for the avatars bucket
+CREATE POLICY "Authenticated users can select avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can upload avatars" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can delete avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Authenticated users can update avatars" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars');
