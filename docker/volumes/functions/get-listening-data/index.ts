@@ -32,8 +32,8 @@ async function handleListeningDataRequest(_req: Request) {
     .from("played_tracks")
     .select(`
       listened_at,
-      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id ),
-      album-sec:albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, spotify_id, upc, spotify_id)
+      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id, 
+      albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, spotify_id, upc, spotify_id))
     `)
     .eq("user_id", userData.user.id)
     .range(body.offset, body.offset + body.limit - 1);
@@ -51,7 +51,7 @@ async function handleListeningDataRequest(_req: Request) {
     but in reality, they only return one object. as a result, we have to do some
     pretty ugly typecasting to make the compiler happy */
     const track = entry["track-sec"] as unknown as (typeof dbData)[0]["tracks"][0];
-    const album = entry["album-sec"] as unknown as (typeof track)[0]["albums"][0];
+    const album = track.albums as unknown as (typeof track)["albums"];
 
     // extract album information
     const albumInfo: AlbumInfo = {

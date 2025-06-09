@@ -139,3 +139,31 @@ update test.albums set image = replace(image, '"', '') where image like '%"%';
 -- add profile theme column
 alter table public.profiles add column "theme" text;
 update public.profiles set theme = 'dark' where theme is null;
+
+-- remove track albums table in favor of a one track pointing to one album
+
+ALTER TABLE prod.tracks ADD COLUMN album_id bigint;
+ALTER TABLE test.tracks ADD COLUMN album_id bigint;
+
+UPDATE prod.tracks t
+SET album_id = ta.album_id
+FROM prod.track_albums ta
+WHERE t.track_id = ta.track_id;
+
+UPDATE test.tracks t
+SET album_id = ta.album_id
+FROM test.track_albums ta
+WHERE t.track_id = ta.track_id;
+
+ALTER TABLE prod.tracks
+ADD CONSTRAINT tracks_album_id_fk
+FOREIGN KEY (album_id) REFERENCES prod.albums(album_id) ON DELETE CASCADE;
+
+ALTER TABLE test.tracks
+ADD CONSTRAINT tracks_album_id_fk
+FOREIGN KEY (album_id) REFERENCES test.albums(album_id) ON DELETE CASCADE;
+DROP TABLE prod.track_albums;
+DROP TABLE test.track_albums;
+
+alter table prod.played_tracks drop column album_id;
+alter table test.played_tracks drop column album_id;

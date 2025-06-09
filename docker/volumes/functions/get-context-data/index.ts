@@ -33,12 +33,12 @@ async function handleContextDataRequest(_req: Request) {
   .select(`
     listened_at,
     tracks!inner( isrc, track_name, track_artists, track_duration_ms,
-      track_albums!inner( albums!inner( album_name, num_tracks, release_day,
-        release_month, release_year, artists, image ) )
+       albums!inner( album_name, num_tracks, release_day,
+        release_month, release_year, artists, image ) 
     )
   `)
   .eq("user_id", userData.user.id)
-  .eq("tracks.track_albums.albums.image", body.upc);
+  .eq("tracks.albums.image", body.upc);
 
 
   // if start date is provided, filter out listens before start date
@@ -59,8 +59,9 @@ async function handleContextDataRequest(_req: Request) {
     // the supabase api thinks that tracks() and track_albums() return an array of objects,
     // but in reality, they only return one object. as a result, we have to do some
     // pretty ugly typecasting to make the compiler happy
+    console.log(entry)
     const track = entry.tracks as unknown as (typeof dbData)[0]["tracks"][0];
-    const album = track.track_albums[0].albums as unknown as (typeof track)["track_albums"][0]["albums"][0];
+    const album = track.albums as unknown as (typeof track)["albums"];
 
     // extract album information
     const albumInfo: AlbumInfo = {
