@@ -162,8 +162,12 @@ FOREIGN KEY (album_id) REFERENCES prod.albums(album_id) ON DELETE CASCADE;
 ALTER TABLE test.tracks
 ADD CONSTRAINT tracks_album_id_fk
 FOREIGN KEY (album_id) REFERENCES test.albums(album_id) ON DELETE CASCADE;
+
+
 DROP TABLE prod.track_albums;
 DROP TABLE test.track_albums;
 
 alter table prod.played_tracks drop column album_id;
 alter table test.played_tracks drop column album_id;
+
+
