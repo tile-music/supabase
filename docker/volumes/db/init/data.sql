@@ -9,7 +9,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 CREATE SCHEMA IF NOT EXISTS test;
 CREATE SCHEMA IF NOT EXISTS prod;
-
+3333333333333
 -- Grant permissions on the prod schema
 GRANT USAGE ON SCHEMA prod TO public;
 GRANT CREATE ON SCHEMA prod TO public;
@@ -26,6 +26,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA test TO public;
 CREATE DOMAIN "prod"."isrc" AS "text" NOT NULL
 	CONSTRAINT "isrc_check" CHECK ((VALUE ~* '^[A-Za-z]{2}-?\w{3}-?\d{2}-?\d{5}$'::"text"));
 ALTER DOMAIN "prod"."isrc" OWNER TO "postgres";
+
 
 -- Albums
 CREATE TABLE IF NOT EXISTS "prod"."albums"(
@@ -45,11 +46,26 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
 );
 
-
 CREATE TABLE test.albums (LIKE prod.albums INCLUDING ALL);
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
 ALTER TABLE "test"."albums" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "prod"."album_mbids" (
+	"album id" bigint NOT NULL,
+	"mbid" uuid NOT null,
+	"updated_at" bigint NOT NULL,
+	"score" SMALLINT,
+	CONSTRAINT album_mbid_key FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
+);
+
+CREATE TABLE test.album_mbids (LIKE prod.album_mbids INCLUDING ALL);
+
+ALTER TABLE "prod"."album_mbids" OWNER TO "postgres";
+ALTER TABLE "test"."album_mbids" OWNER TO "postgres";
+
+ALTER TABLE "test"."album_mbids" ADD CONSTRAINT album_mbid FOREIGN KEY ("album_id") REFERENCES test.albums("album_id");
 
 -- Tracks
 CREATE TABLE IF NOT EXISTS prod."tracks" (
@@ -67,8 +83,6 @@ CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);
 ALTER TABLE test.tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 alter table test.tracks add CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms");
 
-
-
 --CREATE UNIQUE INDEX idx_unique_albums
 --ON "prod"."albums" (album_name, album_type, num_tracks, release_day,release_month,release_year, artists, genre, upc, ean, popularity, image);
 
@@ -77,6 +91,22 @@ ALTER table test.track_albums OWNER TO "postgres";
 
 ALTER TABLE "prod"."tracks" OWNER TO "postgres";
 ALTER TABLE "test"."tracks" OWNER TO "postgres";
+
+CREATE TABLE IF NOT EXISTS "prod"."track_mbids" (
+	"track_id" bigint NOT NULL,
+	"track_mbid" uuid NOT null,
+	"updated_at" bigint NOT NULL,
+	"score" SMALLINT,
+	"album_mbid" uuid NOT NULL,
+	CONSTRAINT track_mbid_key FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
+	CONSTRAINT track_album_mbid_key FOREIGN KEY ("album_mbid") REFERENCES "prod"."album_mbids"("mbid") ON DELETE CASCADE
+ );
+
+CREATE TABLE test.track_mbids (LIKE prod.track_mbids INCLUDING ALL);
+
+ALTER TABLE test.track_mbids ADD CONSTRAINT track_mbid_key FOREIGN KEY ("track_id") REFERENCES "test"."tracks"("track_id") ON DELETE CASCADE;
+ALTER TABLE test.track_mbids ADD CONSTRAINT track_album_mbid_key FOREIGN KEY ("album_mbid") REFERENCES "test"."album_mbids"("mbid") ON DELETE CASCADE;
+
 
 -- Played Tracks
 create table prod.played_tracks (
@@ -106,7 +136,7 @@ alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("use
 CREATE table test.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 ALTER Table test.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
-alter table test.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+alter table teseest.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 
 -- Table permissions for test & prod
