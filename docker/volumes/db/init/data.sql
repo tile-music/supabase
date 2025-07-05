@@ -9,7 +9,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 CREATE SCHEMA IF NOT EXISTS test;
 CREATE SCHEMA IF NOT EXISTS prod;
-3333333333333
+
 -- Grant permissions on the prod schema
 GRANT USAGE ON SCHEMA prod TO public;
 GRANT CREATE ON SCHEMA prod TO public;
@@ -53,8 +53,8 @@ ALTER TABLE "test"."albums" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "prod"."album_mbids" (
-	"album id" bigint NOT NULL,
-	"mbid" uuid NOT null,
+	"album_id" bigint NOT NULL,
+	"mbid" uuid unique NOT null,
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
 	CONSTRAINT album_mbid_key FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
@@ -72,10 +72,10 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     track_id BIGSERIAL primary key,
     "isrc" "prod"."isrc",
     "track_name" "text",
-    "track_artists" "text"[],
-    "track_duration_ms" integer,
-    "spotify_id" text,
-    album id bigint,
+    track_artists text[],
+    track_duration_ms integer,
+    spotify_id text,
+    album_id bigint,
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,
     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
@@ -86,15 +86,12 @@ alter table test.tracks add CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT 
 --CREATE UNIQUE INDEX idx_unique_albums
 --ON "prod"."albums" (album_name, album_type, num_tracks, release_day,release_month,release_year, artists, genre, upc, ean, popularity, image);
 
-ALTER table "prod"."track_albums" OWNER TO "postgres";
-ALTER table test.track_albums OWNER TO "postgres";
-
 ALTER TABLE "prod"."tracks" OWNER TO "postgres";
 ALTER TABLE "test"."tracks" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "prod"."track_mbids" (
 	"track_id" bigint NOT NULL,
-	"track_mbid" uuid NOT null,
+	"mbid" uuid unique not null,
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
 	"album_mbid" uuid NOT NULL,
@@ -119,6 +116,8 @@ create table prod.played_tracks (
   album_popularity smallint,
   album_popularity_updated_at bigint,
   isrc prod.isrc,
+  selected_mbid uuid,
+  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."track_mbids"("mbid") on delete cascade,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
@@ -136,7 +135,7 @@ alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("use
 CREATE table test.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 ALTER Table test.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
-alter table teseest.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+alter table test.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 
 -- Table permissions for test & prod
@@ -172,10 +171,6 @@ GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "anon";
 GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "authenticated";
 GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "service_role";
 
-GRANT ALL ON TABLE "prod"."track_albums" TO "anon";
-GRANT ALL ON TABLE "prod"."track_albums" TO "authenticated";
-GRANT ALL ON TABLE "prod"."track_albums" TO "service_role";
-
 GRANT ALL ON TABLE "prod"."tracks" TO "anon";
 GRANT ALL ON TABLE "prod"."tracks" TO "authenticated";
 GRANT ALL ON TABLE "prod"."tracks" TO "service_role";
@@ -196,9 +191,7 @@ GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "anon";
 GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "authenticated";
 GRANT ALL ON TABLE "test"."unmatched_played_tracks" TO "service_role";
 
-GRANT ALL ON TABLE "test"."track_albums" TO "anon";
-GRANT ALL ON TABLE "test"."track_albums" TO "authenticated";
-GRANT ALL ON TABLE "test"."track_albums" TO "service_role";
+
 
 -- continue albums here for now focus on creds
 

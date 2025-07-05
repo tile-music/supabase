@@ -2,7 +2,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { createSbClient } from "../_shared/client.ts";
 import type { SongInfo, AlbumInfo } from "../../../../../lib/Song.ts";
 import type { DisplayDataRequest, RankOutput } from "../../../../../lib/Request.ts";
-
+import {log} from "../../../../../lib/log.ts"
 /**
  * Handles requests for art display data, querying a user's list of played tracks and
  * sorting/filtering them based on request parameters.
@@ -40,6 +40,7 @@ async function handleUserDataRequest(_req: Request) {
   .eq("user_id", userData.user.id);
 
 
+
   // if start date is provided, filter out listens before start date
   if (body.date.start) query = query.gte("listened_at", body.date.start);
 
@@ -51,6 +52,8 @@ async function handleUserDataRequest(_req: Request) {
 
   // execute query
   const { data: dbData, error } = await query;
+
+  log(5, )
   if (error) throw error;
 
   const songs: SongInfo[] = [];
