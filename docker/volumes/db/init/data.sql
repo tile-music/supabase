@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS "prod"."album_mbids" (
 	"mbid" uuid unique NOT null,
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
+    "type" text not null,
 	CONSTRAINT album_mbid_key FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
 );
 
@@ -80,7 +81,7 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
 CREATE TABLE test.tracks (LIKE prod.tracks INCLUDING ALL);
-ALTER TABLE test.tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
+ALTER TABLE test.tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) REFERENCES test.albums("album_id");
 alter table test.tracks add CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms");
 
 --CREATE UNIQUE INDEX idx_unique_albums
@@ -95,6 +96,7 @@ CREATE TABLE IF NOT EXISTS "prod"."track_mbids" (
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
 	"album_mbid" uuid NOT NULL,
+    "type" text NOT NULL,
 	CONSTRAINT track_mbid_key FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
 	CONSTRAINT track_album_mbid_key FOREIGN KEY ("album_mbid") REFERENCES "prod"."album_mbids"("mbid") ON DELETE CASCADE
  );
@@ -110,7 +112,6 @@ create table prod.played_tracks (
   play_id BIGSERIAL primary key not null,
   user_id uuid not null,
   track_id bigint not null,
-  album_id bigint not null,
   listened_at  bigint  not null ,
   track_popularity smallint,
   album_popularity smallint,
@@ -125,7 +126,6 @@ create table prod.played_tracks (
 
 CREATE TABLE prod.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE prod.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES prod.tracks("track_id");
-ALTER Table prod.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references prod.albums("album_id");
 alter table prod.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
@@ -134,7 +134,6 @@ alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("use
 
 CREATE table test.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
-ALTER Table test.unmatched_played_tracks ADD CONSTRAINT album_id_ref FOREIGN KEY (album_id) references test.albums("album_id");
 alter table test.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
 
 
