@@ -106,6 +106,21 @@ CREATE TABLE test.track_mbids (LIKE prod.track_mbids INCLUDING ALL);
 ALTER TABLE test.track_mbids ADD CONSTRAINT track_mbid_key FOREIGN KEY ("track_id") REFERENCES "test"."tracks"("track_id") ON DELETE CASCADE;
 ALTER TABLE test.track_mbids ADD CONSTRAINT track_album_mbid_key FOREIGN KEY ("album_mbid") REFERENCES "test"."album_mbids"("mbid") ON DELETE CASCADE;
 
+create table if not exists "prod"."album_art" (
+	"mbid" uuid not null,
+	"small" text,
+	"large" text,
+	"1200" text,
+	"500" text,
+	"250" text,
+	"source" text not null,
+	"type" text not null, 
+	constraint mbid_ref foreign key ("mbid") references "prod".album_mbids("mbid") on delete cascade
+);
+
+create table test.album_art (like prod.album_art including all);
+
+alter table test.album_art add constraint mbid_ref foreign key ("mbid") references "test".album_mbids("mbid");
 
 -- Played Tracks
 create table prod.played_tracks (
@@ -118,7 +133,7 @@ create table prod.played_tracks (
   album_popularity_updated_at bigint,
   isrc prod.isrc,
   selected_mbid uuid,
-  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."track_mbids"("mbid") on delete cascade,
+  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."album_mbids"("mbid") on delete cascade,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
@@ -131,6 +146,7 @@ alter table prod.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN
 CREATE table test.played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
 alter table test.played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+alter table test.played_tracks add CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."album_mbids"("mbid") on delete cascade;
 
 CREATE table test.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE test.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES test.tracks("track_id");
