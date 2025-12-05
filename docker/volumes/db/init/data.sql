@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "ean" text,
     "image" text,
     "spotify_id" text,
+    "num_dics" int,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
 );
 
@@ -77,6 +78,8 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     track_duration_ms integer,
     spotify_id text,
     album_id bigint,
+    track_num int,
+    --disc_num int,
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,
     CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
 );
