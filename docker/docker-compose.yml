@@ -95,7 +95,7 @@ services:
       interval: 5s
       retries: 3
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -165,7 +165,7 @@ services:
     image: postgrest/postgrest:v12.2.12
     restart: unless-stopped
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -189,7 +189,7 @@ services:
     image: supabase/realtime:v2.34.47
     restart: unless-stopped
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -249,7 +249,7 @@ services:
       interval: 5s
       retries: 3
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       rest:
@@ -299,7 +299,7 @@ services:
     image: supabase/postgres-meta:v0.91.0
     restart: unless-stopped
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -367,7 +367,7 @@ services:
       interval: 5s
       retries: 10
     depends_on:
-      db:
+      supabase-db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
     environment:
@@ -393,7 +393,7 @@ services:
       # GOOGLE_PROJECT_NUMBER: ${GOOGLE_PROJECT_NUMBER}
 
   # Comment out everything below this point if you are using an external Postgres database
-  db:
+  supabase-db:
     container_name: supabase-db
     image: supabase/postgres:15.8.1.060
     restart: unless-stopped
@@ -443,7 +443,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: ${JWT_EXPIRY}
-      
+
     command:
       [
         "postgres",
@@ -509,7 +509,7 @@ services:
       timeout: 5s
       retries: 5
     depends_on:
-      db:
+      supabase-db:
         condition: service_healthy
       analytics:
         condition: service_healthy
@@ -518,7 +518,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase      
+      DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
       CLUSTER_POSTGRES: true
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       VAULT_ENC_KEY: ${VAULT_ENC_KEY}
