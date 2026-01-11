@@ -95,7 +95,7 @@ services:
       interval: 5s
       retries: 3
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -165,7 +165,7 @@ services:
     image: postgrest/postgrest:v12.2.12
     restart: unless-stopped
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -189,7 +189,7 @@ services:
     image: supabase/realtime:v2.34.47
     restart: unless-stopped
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -249,7 +249,7 @@ services:
       interval: 5s
       retries: 3
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       rest:
@@ -299,7 +299,7 @@ services:
     image: supabase/postgres-meta:v0.91.0
     restart: unless-stopped
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
       analytics:
@@ -367,7 +367,7 @@ services:
       interval: 5s
       retries: 10
     depends_on:
-      supabase-db:
+      db:
         # Disable this if you are using an external Postgres database
         condition: service_healthy
     environment:
@@ -393,8 +393,8 @@ services:
       # GOOGLE_PROJECT_NUMBER: ${GOOGLE_PROJECT_NUMBER}
 
   # Comment out everything below this point if you are using an external Postgres database
-  supabase-db:
-    container_name: supabase-db
+  db:
+    container_name: db
     image: supabase/postgres:15.8.1.060
     restart: unless-stopped
     volumes:
@@ -509,7 +509,7 @@ services:
       timeout: 5s
       retries: 5
     depends_on:
-      supabase-db:
+      db:
         condition: service_healthy
       analytics:
         condition: service_healthy
