@@ -6,7 +6,7 @@ import { assertListeningColumns } from "../_shared/validate_listening.ts";
 type SortCol = {column: string, order: string}
 /**
  * Handles the user data request.
- * 
+ *
  * @param _req - The request object.
  * @returns A response object containing the user's played tracks' or null if empty.
  */
@@ -32,8 +32,8 @@ async function handleListeningDataRequest(_req: Request) {
     .from("played_tracks")
     .select(`
       listened_at,
-      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id, 
-      albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, spotify_id, upc, spotify_id))
+      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id,
+      albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, service_id, upc))
     `)
     .eq("user_id", userData.user.id)
     .range(body.offset, body.offset + body.limit - 1);

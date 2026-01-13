@@ -26,7 +26,7 @@ ALTER DOMAIN "prod"."isrc" OWNER TO "postgres";
 
 -- Albums
 CREATE TABLE IF NOT EXISTS "prod"."albums"(
-    "album_id" BIGSERIAL PRIMARY KEY,
+    "album_id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "album_name" text,
     "album_type" text,
     "num_tracks" int,
@@ -48,7 +48,7 @@ ALTER TABLE "prod"."albums" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "prod"."album_mbids" (
-	"album_id" bigint NOT NULL,
+	"album_id" uuid NOT NULL,
 	"mbid" uuid unique NOT null,
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
@@ -62,13 +62,13 @@ ALTER TABLE "prod"."album_mbids" OWNER TO "postgres";
 
 -- Tracks
 CREATE TABLE IF NOT EXISTS prod."tracks" (
-    track_id BIGSERIAL primary key,
+    track_id uuid primary key DEFAULT gen_random_uuid(),
     "isrc" "prod"."isrc",
     "track_name" "text",
     track_artists text[],
     track_duration_ms integer,
-    spotify_id text,
-    album_id bigint,
+    external_id text,
+    album_id uuid,
     track_num int,
     --disc_num int,
     constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
 ALTER TABLE "prod"."tracks" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "prod"."track_mbids" (
-	"track_id" bigint NOT NULL,
+	"track_id" uuid NOT NULL,
 	"mbid" uuid unique not null,
 	"updated_at" bigint NOT NULL,
 	"score" SMALLINT,
@@ -99,15 +99,15 @@ create table if not exists "prod"."album_art" (
 	"500" text,
 	"250" text,
 	"source" text not null,
-	"type" text not null, 
+	"type" text not null,
 	constraint mbid_ref foreign key ("mbid") references "prod".album_mbids("mbid") on delete cascade
 );
 
 -- Played Tracks
 create table prod.played_tracks (
-  play_id BIGSERIAL primary key not null,
+  play_id uuid primary key DEFAULT gen_random_uuid(),
   user_id uuid not null,
-  track_id bigint not null,
+  track_id uuid not null,
   listened_at  bigint  not null ,
   track_popularity smallint,
   album_popularity smallint,
@@ -149,7 +149,7 @@ GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "service_role";
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
-    "id" "uuid" NOT NULL,
+    "id" "uuid" NOT NULL ,
     "updated_at" timestamp with time zone,
     "username" "text",
     "full_name" "text",
@@ -166,16 +166,13 @@ GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 
 ALTER TABLE ONLY "public"."profiles"
-ADD CONSTRAINT "profiles_id_pkey" PRIMARY KEY ("id");
-
-ALTER TABLE ONLY "public"."profiles"
 ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 -- Spotify credentials
 
 
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE references "auth"."users"("id") ON DELETE CASCADE,
+    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
 
@@ -185,4 +182,3 @@ ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
 GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
-
