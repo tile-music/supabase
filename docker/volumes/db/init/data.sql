@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
     "track_name" "text",
     track_artists text[],
     track_duration_ms integer,
-    external_id text,
+    spotify_id text,
     album_id uuid,
     track_num int,
     --disc_num int,
