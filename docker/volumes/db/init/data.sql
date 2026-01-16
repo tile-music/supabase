@@ -38,27 +38,20 @@ CREATE TABLE IF NOT EXISTS "prod"."albums"(
     "upc" text,
     "ean" text,
     "image" text,
-    "spotify_id" text,
+    "external_id" text,
+	"image_small" text,
+	"image_large" text,
+	"image_1200" text,
+	"image_500" text,
+	"image_250" text,
+	"image_source" text,
+	"image_type" text,
     "num_dics" int,
     CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
 );
 
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "prod"."album_mbids" (
-	"album_id" uuid NOT NULL,
-	"mbid" uuid unique NOT null,
-	"updated_at" bigint NOT NULL,
-	"score" SMALLINT,
-    "type" text not null,
-	CONSTRAINT album_mbid_key FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE
-);
-
-
-ALTER TABLE "prod"."album_mbids" OWNER TO "postgres";
-
 
 -- Tracks
 CREATE TABLE IF NOT EXISTS prod."tracks" (
@@ -80,28 +73,86 @@ CREATE TABLE IF NOT EXISTS prod."tracks" (
 
 ALTER TABLE "prod"."tracks" OWNER TO "postgres";
 
-CREATE TABLE IF NOT EXISTS "prod"."track_mbids" (
-	"track_id" uuid NOT NULL,
-	"mbid" uuid unique not null,
-	"updated_at" bigint NOT NULL,
-	"score" SMALLINT,
-	"album_mbid" uuid NOT NULL,
-    "type" text NOT NULL,
-	CONSTRAINT track_mbid_key FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
-	CONSTRAINT track_album_mbid_key FOREIGN KEY ("album_mbid") REFERENCES "prod"."album_mbids"("mbid") ON DELETE CASCADE
- );
-
-create table if not exists "prod"."album_art" (
-	"mbid" uuid not null,
-	"small" text,
-	"large" text,
-	"1200" text,
-	"500" text,
-	"250" text,
-	"source" text not null,
-	"type" text not null,
-	constraint mbid_ref foreign key ("mbid") references "prod".album_mbids("mbid") on delete cascade
+/* ============================================================
+   MUSICBRAINZ CANONICAL TABLES (DERIVED VIA LIKE)
+   ============================================================ */
+   /* -----------------------
+      MB RELEASE GROUPS
+      ----------------------- */
+CREATE TABLE IF NOT EXISTS prod.mb_release_groups (
+    LIKE prod.albums INCLUDING DEFAULTS
 );
+
+ALTER TABLE prod.mb_release_groups
+    DROP COLUMN album_id,
+    DROP COLUMN external_id,
+    DROP COLUMN upc,
+    DROP COLUMN ean,
+    ADD COLUMN mbid uuid PRIMARY KEY,
+    ADD COLUMN primary_type text,
+    ADD COLUMN secondary_types text[],
+    ADD COLUMN created_at bigint NOT NULL,
+    ADD COLUMN updated_at bigint NOT NULL;
+
+ALTER TABLE prod.mb_release_groups OWNER TO postgres;
+
+GRANT ALL ON TABLE prod.mb_release_groups TO anon, authenticated, service_role;
+
+
+   /* -----------------------
+      MB RELEASES
+      ----------------------- */
+CREATE TABLE IF NOT EXISTS prod.mb_releases (
+    LIKE prod.albums INCLUDING DEFAULTS
+);
+
+ALTER TABLE prod.mb_releases
+    DROP COLUMN album_id,
+    DROP COLUMN external_id,
+    ADD COLUMN mbid uuid PRIMARY KEY,
+    ADD COLUMN release_group_mbid uuid,
+    ADD COLUMN status text,
+    ADD COLUMN created_at bigint NOT NULL,
+    ADD COLUMN updated_at bigint NOT NULL;
+
+ALTER TABLE prod.mb_releases OWNER TO postgres;
+
+ALTER TABLE prod.mb_releases
+    ADD CONSTRAINT release_group_mbid_ref FOREIGN KEY ("release_group_mbid")
+    references "prod".mb_release_groups("mbid");
+
+GRANT ALL ON TABLE prod.mb_releases TO anon, authenticated, service_role;
+
+/* -----------------------
+   MB RECORDINGS
+   ----------------------- */
+CREATE TABLE IF NOT EXISTS prod.mb_recordings (
+  LIKE prod.tracks INCLUDING DEFAULTS
+);
+
+ALTER TABLE prod.mb_recordings
+  DROP COLUMN track_id,
+  DROP COLUMN album_id,
+  DROP COLUMN external_id,
+  ADD COLUMN mbid uuid PRIMARY KEY,
+  ADD COLUMN release_mbid uuid,
+  ADD COLUMN first_release_year smallint,
+  ADD COLUMN created_at bigint NOT NULL,
+  ADD COLUMN updated_at bigint NOT NULL;
+
+ALTER TABLE prod.mb_recordings
+    ADD CONSTRAINT release_mbid_ref FOREIGN KEY ("release_mbid")
+    references "prod".mb_releases("mbid");
+
+ALTER TABLE prod.mb_recordings OWNER TO postgres;
+
+GRANT ALL ON TABLE prod.mb_recordings TO anon, authenticated, service_role;
+
+
+/* ============================================================
+   PLAYED TRACKS = GLUE POINT
+   ============================================================ */
+
 
 -- Played Tracks
 create table prod.played_tracks (
@@ -114,7 +165,7 @@ create table prod.played_tracks (
   album_popularity_updated_at bigint,
   isrc prod.isrc,
   selected_mbid uuid,
-  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."album_mbids"("mbid") on delete cascade,
+  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."mb_recordings"("mbid") on delete cascade,
   Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
   CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
@@ -123,6 +174,21 @@ create table prod.played_tracks (
 CREATE TABLE prod.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);
 ALTER TABLE prod.unmatched_played_tracks ADD CONSTRAINT track_id_ref FOREIGN KEY (track_id) REFERENCES prod.tracks("track_id");
 alter table prod.unmatched_played_tracks add Constraint user_id_ref_test FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade;
+
+
+/* ============================================================
+   INDEXES (OPTIONAL BUT RECOMMENDED)
+   ============================================================ */
+
+CREATE INDEX IF NOT EXISTS idx_mb_recordings_isrc
+  ON prod.mb_recordings (isrc);
+
+CREATE INDEX IF NOT EXISTS idx_played_tracks_user_track
+  ON prod.played_tracks (user_id, track_id);
+
+CREATE INDEX IF NOT EXISTS idx_played_tracks_recording
+  ON prod.played_tracks (selected_mbid);
+
 
 GRANT USAGE ON SCHEMA prod TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA prod TO anon, authenticated, service_role;
@@ -146,6 +212,26 @@ GRANT ALL ON TABLE "prod"."played_tracks" TO "service_role";
 GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "anon";
 GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "authenticated";
 GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "service_role";
+
+GRANT USAGE ON SCHEMA prod TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL TABLES IN SCHEMA prod
+  TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL ROUTINES IN SCHEMA prod
+  TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL SEQUENCES IN SCHEMA prod
+  TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod
+  GRANT ALL ON TABLES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod
+  GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod
+  GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
