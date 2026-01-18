@@ -312,6 +312,30 @@ services:
       PG_META_DB_USER: supabase_admin
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
 
+  functions:
+    container_name: supabase-edge-functions
+    image: supabase/edge-runtime:v1.67.4
+    restart: unless-stopped
+    volumes:
+      - ./volumes/functions:/home/deno/functions:Z
+    depends_on:
+      analytics:
+        condition: service_healthy
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_DB_URL: postgresql://postgres:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      # TODO: Allow configuring VERIFY_JWT per function. This PR might help: https://github.com/supabase/cli/pull/786
+      VERIFY_JWT: "${FUNCTIONS_VERIFY_JWT}"
+    command:
+      [
+        "start",
+        "--main-service",
+        "/home/deno/functions/main"
+      ]
+
   analytics:
     container_name: supabase-analytics
     image: supabase/logflare:1.14.2
@@ -362,7 +386,7 @@ services:
 
   # Comment out everything below this point if you are using an external Postgres database
   db:
-    container_name: db
+    container_name: supabase-db
     image: supabase/postgres:15.8.1.060
     restart: unless-stopped
     volumes:
@@ -383,8 +407,6 @@ services:
       - ./volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
       # Use named volume to persist pgsodium decryption key between restarts
       - db-config:/etc/postgresql-custom
-      # Our schema
-      - ./volumes/db/init/data.sql/:/docker-entrypoint-initdb.d/init-scripts/99-data.sql:Z
     healthcheck:
       test:
         [
@@ -411,7 +433,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: ${JWT_EXPIRY}
-
     command:
       [
         "postgres",
@@ -428,7 +449,6 @@ services:
     volumes:
       - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
       - ${DOCKER_SOCKET_LOCATION}:/var/run/docker.sock:ro,z
-
     healthcheck:
       test:
         [

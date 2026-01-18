@@ -1,5 +1,5 @@
 create table profiles (
-  id uuid references auth.users not null,
+  id uuid references auth.users not null on delete cascade,
   updated_at timestamp with time zone,
   username text unique,
   avatar_url text,
