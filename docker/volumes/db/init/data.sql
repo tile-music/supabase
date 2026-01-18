@@ -235,7 +235,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA prod
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
-    "id" "uuid" NOT NULL ,
+    "id" "uuid" NOT NULL PRIMARY KEY,
     "updated_at" timestamp with time zone,
     "username" "text",
     "full_name" "text",
@@ -258,7 +258,7 @@ ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("
 
 
 CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
+    "id" "uuid" PRIMARY KEY NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
     "refresh_token" "text"
 );
 
