@@ -416,7 +416,7 @@ services:
       # Use named volume to persist pgsodium decryption key between restarts
       - db-config:/etc/postgresql-custom
       # Our schema
-      - ./volumes/db/init/data.sql/:/docker-entrypoint-initdb.d/init-scripts/99-data.sql:Z
+      #- ./volumes/db/init/data.sql/:/docker-entrypoint-initdb.d/init-scripts/99-data.sql:Z
     healthcheck:
       test:
         [

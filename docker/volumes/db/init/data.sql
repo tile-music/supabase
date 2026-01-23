@@ -26,46 +26,44 @@ ALTER DOMAIN "prod"."isrc" OWNER TO "postgres";
 
 -- Albums
 CREATE TABLE IF NOT EXISTS "prod"."albums"(
-    "album_id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    "album_name" text,
-    "album_type" text,
-    "num_tracks" int,
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "name" text NOT NULL,
+    "type" text NOT NULL,
+    "num_tracks" int NOT NULL,
     "release_day" smallint,
     "release_month" smallint,
     "release_year" smallint,
-    "artists" text[],
+    "artists" text[] NOT NULL,
     "genre" text[],
     "upc" text,
     "ean" text,
-    "image" text,
-    "external_id" text,
+    "external_id" text NOT NULL,
 	"image_small" text,
 	"image_large" text,
-	"image_1200" text,
-	"image_500" text,
-	"image_250" text,
-	"image_source" text,
-	"image_type" text,
     "num_dics" int,
-    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT (album_name, album_type, num_tracks, release_day,release_month, release_year, artists, genre)
+    CONSTRAINT noduplicates UNIQUE NULLS NOT DISTINCT ("name", "type", "num_tracks", "release_day", "release_month", "release_year", "artists", "genre")
 );
 
 
 ALTER TABLE "prod"."albums" OWNER TO "postgres";
 
 -- Tracks
-CREATE TABLE IF NOT EXISTS prod."tracks" (
-    track_id uuid primary key DEFAULT gen_random_uuid(),
-    "isrc" "prod"."isrc",
-    "track_name" "text",
-    track_artists text[],
-    track_duration_ms integer,
+CREATE TABLE prod.tracks (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    isrc prod.isrc,
+    name text,
+    artists text[],
+    duration_ms integer,
     external_id text,
     album_id uuid,
     track_num int,
-    --disc_num int,
-    constraint album_id_ref FOREIGN KEY ("album_id") REFERENCES "prod"."albums"("album_id") ON DELETE CASCADE,
-    CONSTRAINT noduplicates_1 UNIQUE NULLS NOT DISTINCT ("isrc", "track_name", "track_artists", "track_duration_ms")
+    source text NOT NULL,
+    CONSTRAINT album_id_ref
+        FOREIGN KEY (album_id)
+        REFERENCES prod.albums(id)
+        ON DELETE CASCADE,
+    CONSTRAINT noduplicates_1
+        UNIQUE NULLS NOT DISTINCT (isrc, name, artists, duration_ms)
 );
 
 --CREATE UNIQUE INDEX idx_unique_albums
@@ -84,11 +82,11 @@ CREATE TABLE IF NOT EXISTS prod.mb_release_groups (
 );
 
 ALTER TABLE prod.mb_release_groups
-    DROP COLUMN album_id,
+    DROP COLUMN id,
     DROP COLUMN external_id,
     DROP COLUMN upc,
     DROP COLUMN ean,
-    ADD COLUMN mbid uuid PRIMARY KEY,
+    ADD COLUMN id uuid PRIMARY KEY, --this represents an mbid
     ADD COLUMN primary_type text,
     ADD COLUMN secondary_types text[],
     ADD COLUMN created_at bigint NOT NULL,
@@ -107,9 +105,9 @@ CREATE TABLE IF NOT EXISTS prod.mb_releases (
 );
 
 ALTER TABLE prod.mb_releases
-    DROP COLUMN album_id,
+    DROP COLUMN id,
     DROP COLUMN external_id,
-    ADD COLUMN mbid uuid PRIMARY KEY,
+    ADD COLUMN id uuid PRIMARY KEY,
     ADD COLUMN release_group_mbid uuid,
     ADD COLUMN status text,
     ADD COLUMN created_at bigint NOT NULL,
@@ -119,7 +117,7 @@ ALTER TABLE prod.mb_releases OWNER TO postgres;
 
 ALTER TABLE prod.mb_releases
     ADD CONSTRAINT release_group_mbid_ref FOREIGN KEY ("release_group_mbid")
-    references "prod".mb_release_groups("mbid");
+    references "prod".mb_release_groups("id");
 
 GRANT ALL ON TABLE prod.mb_releases TO anon, authenticated, service_role;
 
@@ -131,10 +129,10 @@ CREATE TABLE IF NOT EXISTS prod.mb_recordings (
 );
 
 ALTER TABLE prod.mb_recordings
-  DROP COLUMN track_id,
+  DROP COLUMN id,
   DROP COLUMN album_id,
   DROP COLUMN external_id,
-  ADD COLUMN mbid uuid PRIMARY KEY,
+  ADD COLUMN id uuid PRIMARY KEY,
   ADD COLUMN release_mbid uuid,
   ADD COLUMN first_release_year smallint,
   ADD COLUMN created_at bigint NOT NULL,
@@ -142,7 +140,7 @@ ALTER TABLE prod.mb_recordings
 
 ALTER TABLE prod.mb_recordings
     ADD CONSTRAINT release_mbid_ref FOREIGN KEY ("release_mbid")
-    references "prod".mb_releases("mbid");
+    references "prod".mb_releases("id");
 
 ALTER TABLE prod.mb_recordings OWNER TO postgres;
 
@@ -156,19 +154,18 @@ GRANT ALL ON TABLE prod.mb_recordings TO anon, authenticated, service_role;
 
 -- Played Tracks
 create table prod.played_tracks (
-  play_id uuid primary key DEFAULT gen_random_uuid(),
+  id uuid primary key DEFAULT gen_random_uuid(),
   user_id uuid not null,
   track_id uuid not null,
   listened_at  bigint  not null ,
   track_popularity smallint,
   album_popularity smallint,
   album_popularity_updated_at bigint,
-  isrc prod.isrc,
   selected_mbid uuid,
-  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."mb_recordings"("mbid") on delete cascade,
-  Constraint track_id_ref FOREIGN KEY ("track_id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
+  CONSTRAINT mbid_ref foreign key ("selected_mbid") references "prod"."mb_recordings"("id") on delete cascade,
+  Constraint track_id_ref FOREIGN KEY ("id") REFERENCES "prod"."tracks"("track_id") ON DELETE CASCADE,
   Constraint user_id_ref FOREIGN KEY ("user_id") References "auth".users(id) on delete cascade,
-  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at,isrc)
+  CONSTRAINT noduplicates_played UNIQUE NULLS NOT DISTINCT (user_id,track_id,listened_at)
 );
 
 CREATE TABLE prod.unmatched_played_tracks (LIKE prod.played_tracks INCLUDING ALL);

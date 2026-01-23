@@ -32,8 +32,8 @@ async function handleListeningDataRequest(_req: Request) {
     .from("played_tracks")
     .select(`
       listened_at,
-      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, spotify_id,
-      albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image, service_id, upc))
+      track-sec:tracks ( isrc, track_name, track_artists, track_duration_ms, external_id,
+      albums ( album_name, num_tracks, release_day,release_month,release_year, artists, image_large, external_id, upc))
     `)
     .eq("user_id", userData.user.id)
     .range(body.offset, body.offset + body.limit - 1);
@@ -61,7 +61,7 @@ async function handleListeningDataRequest(_req: Request) {
       release_month: album.release_month,
       release_year: album.release_year,
       artists: album.artists,
-      image: album.image,
+      image: album.image_large,
       upc: album.upc,
       spotify_id: album.spotify_id,
     };
