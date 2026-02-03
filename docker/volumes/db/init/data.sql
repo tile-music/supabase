@@ -149,7 +149,7 @@ GRANT ALL ON TABLE "prod"."unmatched_played_tracks" TO "service_role";
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
-    "id" "uuid" NOT NULL ,
+    "id" "uuid" NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     "updated_at" timestamp with time zone,
     "username" "text",
     "full_name" "text",
@@ -165,20 +165,21 @@ GRANT ALL ON TABLE "public"."profiles" TO "anon";
 GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 
-ALTER TABLE ONLY "public"."profiles"
-ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
--- Spotify credentials
-
-
-CREATE TABLE IF NOT EXISTS "public"."spotify_credentials" (
-    "id" "uuid" NOT NULL references "auth"."users"("id") ON DELETE CASCADE,
-    "refresh_token" "text"
+-- Connected accounts
+CREATE TABLE IF NOT EXISTS public.connected_accounts (
+    id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    provider text NOT NULL,
+    refresh_token text NOT NULL,
+    access_token text,
+    access_token_expires_at timestamptz,
+    scope text NOT NULL,
+    UNIQUE (user_id, provider)
 );
 
+ALTER TABLE public.connected_accounts OWNER TO "postgres";
+ALTER TABLE public.connected_accounts ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE "public"."spotify_credentials" OWNER TO "postgres";
-
-GRANT ALL ON TABLE "public"."spotify_credentials" TO "anon";
-GRANT ALL ON TABLE "public"."spotify_credentials" TO "authenticated";
-GRANT ALL ON TABLE "public"."spotify_credentials" TO "service_role";
+GRANT ALL ON TABLE public.connected_accounts TO "anon";
+GRANT ALL ON TABLE public.connected_accounts TO "authenticated";
+GRANT ALL ON TABLE public.connected_accounts TO "service_role";
