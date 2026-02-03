@@ -12,8 +12,15 @@ CREATE TABLE IF NOT EXISTS public.albums (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     source_title text NOT NULL,
     source_artists text[] NOT NULL,
+    source_album_type text NOT NULL,
+    source_image text NOT NULL,
     source_service text NOT NULL,
-    source_external_id text NOT NULL
+    source_external_id text NOT NULL,
+    source_data jsonb,
+    UNIQUE NULLS NOT DISTINCT (
+        source_service, source_artists, source_external_id, source_title
+    )
+
 );
 
 ALTER TABLE public.albums OWNER TO "postgres";
@@ -26,25 +33,28 @@ CREATE TABLE IF NOT EXISTS public.tracks (
     source_title text NOT NULL,
     source_artists text[] NOT NULL,
     source_service text NOT NULL,
-    source_external_id text NOT NULL
+    source_external_id text NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (
+        album_id, source_service, source_artists, source_external_id, source_title
+    )
 );
 
 ALTER TABLE public.tracks OWNER TO "postgres";
 ALTER TABLE public.tracks ENABLE ROW LEVEL SECURITY;
 
 -- Played tracks
-CREATE TABLE IF NOT EXISTS public.play (
+CREATE TABLE IF NOT EXISTS public.plays (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   track_id uuid REFERENCES public.tracks(id) ON DELETE CASCADE,
-  timestamp timestamptz  NOT NULL,
+  timestamp bigint NOT NULL,
   track_popularity smallint,
   album_popularity smallint,
   UNIQUE NULLS NOT DISTINCT (user_id,track_id, timestamp)
 );
 
-ALTER TABLE public.play OWNER TO "postgres";
-ALTER TABLE public.play ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.plays OWNER TO "postgres";
+ALTER TABLE public.plays ENABLE ROW LEVEL SECURITY;
 
 -- Track -> MusicBrainz recording
 create table public.mb_track_recordings(
@@ -102,3 +112,22 @@ ALTER TABLE public.connected_accounts ENABLE ROW LEVEL SECURITY;
 -- GRANT ALL ON TABLE public.table TO "anon";
 -- GRANT ALL ON TABLE public.table TO "authenticated";
 -- GRANT ALL ON TABLE public.table TO "service_role";
+
+
+CREATE POLICY "only service insert albums"
+ON public.albums
+FOR INSERT
+TO service_role
+WITH CHECK (true);
+
+CREATE POLICY "only service insert plays"
+ON public.plays
+FOR INSERT
+TO service_role
+WITH CHECK (true);
+
+CREATE POLICY "only service insert tracks"
+ON public.tracks
+FOR INSERT
+TO service_role
+WITH CHECK (true);
