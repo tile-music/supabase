@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS public.connected_accounts (
     access_token text,
     access_token_expires_at timestamptz,
     scope text NOT NULL,
-    UNIQUE (user_id, provider)
+    UNIQUE (user_id, provider),
+    CHECK (provider IN ('spotify'))
 );
 
 ALTER TABLE public.connected_accounts OWNER TO "postgres";
@@ -131,3 +132,9 @@ ON public.tracks
 FOR INSERT
 TO service_role
 WITH CHECK (true);
+
+CREATE POLICY "authenticated users can manage connected accounts"
+ON public.connected_accounts
+FOR ALL
+TO authenticated
+USING ( (select auth.uid()) = user_id );
