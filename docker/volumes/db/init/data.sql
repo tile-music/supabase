@@ -85,9 +85,10 @@ ALTER TABLE public.mb_album_releases ENABLE ROW LEVEL SECURITY;
 -- Profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    updated_at timestamptz,
+    updated_at timestamptz NOT NULL,
+    username text NOT NULL,
     name text,
-    theme text,
+    theme text NOT NULL,
     avatar_id text
 );
 
@@ -138,3 +139,9 @@ ON public.connected_accounts
 FOR ALL
 TO authenticated
 USING ( (select auth.uid()) = user_id );
+
+CREATE POLICY "authenticated users can manage profiles"
+ON public.profiles
+FOR ALL
+TO authenticated
+USING ( (select auth.uid()) = id );
