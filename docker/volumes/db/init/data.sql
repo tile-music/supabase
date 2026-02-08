@@ -100,12 +100,12 @@ CREATE TABLE IF NOT EXISTS public.connected_accounts (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     provider text NOT NULL,
-    refresh_token text NOT NULL,
+    refresh_token text,
     access_token text,
     access_token_expires_at timestamptz,
     scope text NOT NULL,
     UNIQUE (user_id, provider),
-    CHECK (provider IN ('spotify'))
+    CHECK (provider IN ('spotify', 'apple'))
 );
 
 ALTER TABLE public.connected_accounts OWNER TO "postgres";
