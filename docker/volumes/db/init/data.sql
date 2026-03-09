@@ -56,12 +56,33 @@ CREATE TABLE IF NOT EXISTS public.plays (
 ALTER TABLE public.plays OWNER TO "postgres";
 ALTER TABLE public.plays ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE IF NOT EXISTS public.mb_releases(
+    id uuid PRIMARY KEY,
+    created_at timestamptz NOT NULL,
+    updated_at timestamptz
+);
+
+-- Album -> MusicBrainz release
+CREATE TABLE IF NOT EXISTS public.mb_album_releases(
+    id uuid NOT NULL REFERENCES public.mb_releases(id) on DELETE CASCADE,
+    album_id uuid NOT NULL REFERENCES public.albums(id) ON DELETE CASCADE,
+    release_group_id uuid NOT NULL,
+    is_primary boolean NOT NULL DEFAULT false,
+    UNIQUE (id, album_id),
+    created_at timestamptz NOT NULL,
+    updated_at timestamptz
+);
+
+ALTER TABLE public.mb_album_releases OWNER TO "postgres";
+ALTER TABLE public.mb_album_releases ENABLE ROW LEVEL SECURITY;
+
 -- Track -> MusicBrainz recording
 create table public.mb_track_recordings(
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id uuid,
     track_id uuid NOT NULL REFERENCES public.tracks(id) ON DELETE CASCADE,
-    recording_id uuid NOT NULL,
+    release_id uuid NOT NULL REFERENCES public.mb_releases(id) ON DELETE CASCADE,
     is_primary boolean NOT NULL DEFAULT false,
+    UNIQUE (id, track_id),
     created_at timestamptz NOT NULL,
     updated_at timestamptz
 );
@@ -69,18 +90,6 @@ create table public.mb_track_recordings(
 ALTER TABLE public.mb_track_recordings OWNER TO "postgres";
 ALTER TABLE public.mb_track_recordings ENABLE ROW LEVEL SECURITY;
 
--- Album -> MusicBrainz release
-CREATE TABLE IF NOT EXISTS public.mb_album_releases(
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    album_id uuid NOT NULL REFERENCES public.albums(id) ON DELETE CASCADE,
-    recording_id uuid NOT NULL,
-    is_primary boolean NOT NULL DEFAULT false,
-    created_at timestamptz NOT NULL,
-    updated_at timestamptz
-);
-
-ALTER TABLE public.mb_album_releases OWNER TO "postgres";
-ALTER TABLE public.mb_album_releases ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
