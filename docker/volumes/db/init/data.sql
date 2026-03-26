@@ -90,6 +90,12 @@ create table public.mb_track_recordings(
 ALTER TABLE public.mb_track_recordings OWNER TO "postgres";
 ALTER TABLE public.mb_track_recordings ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE public.mb_album_art(
+    release_id uuid NOT NULL REFERENCES public.mb_releases(id) ON DELETE CASCADE,
+    image_type text NOT NULL,
+    image_url text NOT NULL,
+    PRIMARY KEY (release_id, image_type)
+);
 
 -- Profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
